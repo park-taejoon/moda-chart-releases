@@ -3,6 +3,7 @@
 - [시작하기 — 템플릿에서 새 프로젝트 만들기](./getting-started.md)
 - [아키텍처 — 코어/어댑터/스냅샷 계약](./architecture.md)
 - [기능 추가 워크플로](./extending.md)
+- [플러그인 · 대체 렌더러 가이드](./plugins.md)
 - [테스트 — 유닛/컨포먼스/E2E](./testing.md)
 - [테마 — CSS 변수](./theming.md)
 - [마이그레이션 매핑](./migration.md)

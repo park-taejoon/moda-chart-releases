@@ -35,9 +35,25 @@
 | `packages/core/src/types.ts`       | 옵션·스냅샷·이벤트 타입                 |
 | `packages/core/src/scales.ts`      | 도메인/눈금/스케일 수학                 |
 | `packages/core/src/geometry.ts`    | line/area/arc path 빌더                 |
-| `packages/core/src/core.ts`        | 상태 로직 + 스냅샷 계산                 |
-| `packages/core/src/svg.ts`         | 스냅샷 → SVG 문자열 (렌더/export 공용)  |
-| `packages/core/src/mount.ts`       | DOM 반영 + 인터랙션 배선 + mountChart   |
+| `packages/core/src/core.ts`        | `ChartCore` — 내장 빌더 주입 얇은 셸    |
+| `packages/core/src/core-impl.ts`   | 공개 API 파사드 + 스냅샷 조립           |
+| `packages/core/src/lite.ts`        | lite 경로 — 빌더 선택 번들(서브패스)    |
+| `packages/core/src/view.ts`        | 뷰 계층 — 스켈레톤/renderInto/bindChart |
+| `packages/core/src/mount.ts`       | mountChart + 보내기 헬퍼                |
+| `packages/core/src/build/`         | 스냅샷 지오메트리 — 타입별 순수 빌더 +  |
+|                                    | `registry.ts` 체인 (`buildGeometry`)    |
+| `packages/core/src/controllers/`   | 상태 슬라이스 — data/viewport/          |
+|                                    | interaction/drawing/map-state/sync      |
+| `packages/core/src/features/`      | 피처 계약 — `CoreHost`/`ChartFeature`   |
+|                                    | (`options.features`/`chart.use()`)      |
+| `packages/core/src/hit-test.ts`    | px 좌표 → 포인트 해석 (HitContext 주입) |
+| `packages/core/src/renderer.ts`    | `ChartRenderer` 계약 — 스냅샷→화면 경계 |
+| `packages/core/src/render/`        | 지오메트리 이미터 — kind별 순수 함수 +  |
+|                                    | `registry.ts` 체인 (`emitGeometry`)     |
+| `packages/core/src/svg-impl.ts`    | SVG 합성 — 축/그리드/오버레이 +         |
+|                                    | 이미터 체인 주입본 (`svgInnerImpl`)     |
+| `packages/core/src/svg.ts`         | 풀 진입 — 내장 이미터 주입 `svgInner`   |
+|                                    | (기본 `svgRenderer`는 mount.ts 소유)    |
 | `packages/core/src/conformance.ts` | 5렌더러 공용 DOM 계약 스펙              |
 | `packages/*/src`                   | 어댑터 — 바인딩만, 로직 없음            |
 | `apps/dev-*`                       | 데모 — 기능 체크리스트 + 실제 옵션 사용 |
