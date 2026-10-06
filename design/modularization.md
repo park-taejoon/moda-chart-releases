@@ -187,7 +187,15 @@ packages/core/src/
      `views.ts`(스냅샷 뷰 모델)/`events.ts`(이벤트)/`api.ts`
      (Chart*Api 슬라이스). `types.ts`는 barrel — 모든
      `import from "./types.js"` 경로 무파괴
-   - core-impl.ts 2249 → 2151줄 (최초 대비 66% 축소)
+   - `numericTicks`/`groupTicks`를 snapshot/axes.ts 내부 함수로
+     이동 — SnapCtx 콜백 2개 제거, `catGroup`만 추가
+   - core-impl.ts 2249 → 2106줄 (최초 대비 67% 축소)
+   - `lite-guard.test.ts` 신규 — lite/view 진입점의 정적 import
+     그래프가 build/defaults·render/defaults·svg·core·mount에
+     도달하면 실패. 트리셰이킹 회귀를 CI가 잡는다
+   - `core.test.ts`(3122줄) → 3분할: core(기본/인터랙션) +
+     core-charts(지도/계층/플로우/극좌표) + core-advanced(그리기/
+     search/XML/updateDelta). 공용 픽스처는 test-utils.ts
 
 순서가 중요하다 — 1→2로 스냅샷 생성 경계를 먼저 깨끗하게 만들어야
 그 위의 `CoreHost`/`ChartRenderer` 인터페이스가 순환 참조 없이 성립한다.
