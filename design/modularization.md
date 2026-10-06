@@ -1,12 +1,14 @@
 # 코어 모듈화 · 인터페이스화 설계
 
-> 상태: Phase 1~7 완료 — `src/build/` 순수 빌더 + 레지스트리,
+> 상태: Phase 1~8 완료 — `src/build/` 순수 빌더 + 레지스트리,
 > `hit-test.ts`, `controllers/` 6개 슬라이스 추출, `interface Chart`
 > 명문화, `features/core-host.ts` 피처 계약, `renderer.ts`의
 > `ChartRenderer` 경계, `Chart`의 능력 슬라이스 분해(`Chart*Api` 12개),
 > `core-impl.ts` 분리 + `lite.ts` 서브패스(빌더·이미터 선택 번들),
 > `render/` 이미터 분해 + `svg-impl.ts` 합성부,
-> `snapshot/` 부속 뷰 빌더 분해 (core-impl 6325→2249줄).
+> `snapshot/` 부속 뷰 빌더 분해 + `layout.ts` 플롯 프레임 +
+> `a11y.ts` 접근성 텍스트 (core-impl 6325→2151줄),
+> `types.ts` → `types/`(input/views/events/api) 분할.
 > 목적: 유지보수성 + 플러그인/트리셰이킹 + 대체 렌더러 대비
 
 ## 배경 — 진단
@@ -103,6 +105,8 @@ packages/core/src/
   svg.ts        ✅ Phase 6 — 내장 체인 주입 얇은 진입점
   view.ts       ✅ Phase 5/6 — renderIntoView/createSvgRenderer/
                 attachChartView (renderer 인자 필수 — 기본값은 mount.ts)
+  types/        ✅ Phase 8 — input(옵션)/views(스냅샷)/events/api
+                (types.ts는 barrel — import 경로 무파괴)
 ```
 
 ## 마이그레이션 단계
@@ -172,6 +176,18 @@ packages/core/src/
    - `snapshot.test.ts` 신규 22개 — 메뉴/스크롤바/선택 뷰/다중축
      마크/주석 변형/툴팁 shared·point·none/범례 페이지 클램프/
      선택 마킹/에러바 방향/참조 무효화
+8. **Phase 8** — 스냅샷 전반부 + 타입 파일 분할 ✅
+   - `snapshot/layout.ts` — `buildFrame()`: 패딩 규칙(다중축/x축
+     top/무축 타입/픽토그램/네비게이터/스크롤바/그룹 카테고리) →
+     plot rect → x/cat/val 스케일 → 축 도메인. 창 적용 전 전체
+     도메인은 `yFull`로 돌려 호출자가 스태시
+   - `snapshot/a11y.ts` — `describePoint`/`buildA11yText` 이동,
+     SnapCtx에 `nodeMeta` 추가 (계층/플로우 노드 해석용)
+   - `types.ts`(2195줄) → `types/` 4분할: `input.ts`(옵션·입력)/
+     `views.ts`(스냅샷 뷰 모델)/`events.ts`(이벤트)/`api.ts`
+     (Chart*Api 슬라이스). `types.ts`는 barrel — 모든
+     `import from "./types.js"` 경로 무파괴
+   - core-impl.ts 2249 → 2151줄 (최초 대비 66% 축소)
 
 순서가 중요하다 — 1→2로 스냅샷 생성 경계를 먼저 깨끗하게 만들어야
 그 위의 `CoreHost`/`ChartRenderer` 인터페이스가 순환 참조 없이 성립한다.

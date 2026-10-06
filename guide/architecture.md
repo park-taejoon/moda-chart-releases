@@ -32,7 +32,8 @@
 
 | 위치                               | 내용                                    |
 | ---------------------------------- | --------------------------------------- |
-| `packages/core/src/types.ts`       | 옵션·스냅샷·이벤트 타입                 |
+| `packages/core/src/types.ts`       | 타입 barrel — `types/` 재export         |
+| `packages/core/src/types/`         | input(옵션)/views(스냅샷)/events/api    |
 | `packages/core/src/scales.ts`      | 도메인/눈금/스케일 수학                 |
 | `packages/core/src/geometry.ts`    | line/area/arc path 빌더                 |
 | `packages/core/src/core.ts`        | `ChartCore` — 내장 빌더 주입 얇은 셸    |
