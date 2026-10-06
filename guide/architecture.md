@@ -40,8 +40,9 @@
 | `packages/core/src/lite.ts`        | lite 경로 — 빌더 선택 번들(서브패스)    |
 | `packages/core/src/view.ts`        | 뷰 계층 — 스켈레톤/renderInto/bindChart |
 | `packages/core/src/mount.ts`       | mountChart + 보내기 헬퍼                |
-| `packages/core/src/build/`         | 스냅샷 지오메트리 — 타입별 순수 빌더 +  |
-|                                    | `registry.ts` 체인 (`buildGeometry`)    |
+| `packages/core/src/snapshot/`      | 스냅샷 부속 뷰 빌더 — 축/라벨/마크/     |
+|                                    | 오버레이/범례/툴팁/선택 순수 함수       |
+| `packages/core/src/build/`         | 스냅샷 지오메트리 — 타입별 순수 빌더 +  |     |     | `registry.ts` 체인 (`buildGeometry`) |
 | `packages/core/src/controllers/`   | 상태 슬라이스 — data/viewport/          |
 |                                    | interaction/drawing/map-state/sync      |
 | `packages/core/src/features/`      | 피처 계약 — `CoreHost`/`ChartFeature`   |

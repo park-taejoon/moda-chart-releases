@@ -1,11 +1,12 @@
 # 코어 모듈화 · 인터페이스화 설계
 
-> 상태: Phase 1·2·3·4·5·6 완료 — `src/build/` 순수 빌더 + 레지스트리,
+> 상태: Phase 1~7 완료 — `src/build/` 순수 빌더 + 레지스트리,
 > `hit-test.ts`, `controllers/` 6개 슬라이스 추출, `interface Chart`
 > 명문화, `features/core-host.ts` 피처 계약, `renderer.ts`의
 > `ChartRenderer` 경계, `Chart`의 능력 슬라이스 분해(`Chart*Api` 12개),
 > `core-impl.ts` 분리 + `lite.ts` 서브패스(빌더·이미터 선택 번들),
-> `render/` 이미터 분해 + `svg-impl.ts` 합성부.
+> `render/` 이미터 분해 + `svg-impl.ts` 합성부,
+> `snapshot/` 부속 뷰 빌더 분해 (core-impl 6325→2249줄).
 > 목적: 유지보수성 + 플러그인/트리셰이킹 + 대체 렌더러 대비
 
 ## 배경 — 진단
@@ -92,6 +93,12 @@ packages/core/src/
                 defaults.ts(내장 이미터 체인 — 풀 전용),
                 cartesian/slice/heatmap/wordcloud/pictogram/radar/
                 geo-map/hierarchy/flow/polar/gauge 이미터
+  snapshot/     ✅ Phase 7 — buildSnapshot의 부속 뷰 빌더.
+                context.ts(SnapCtx — 스케일/상태/헬퍼 콜백 번들),
+                axes.ts(도메인+축 뷰), data-labels.ts, marks.ts(기준선/
+                영역/주석/그리기), overlays.ts(에러바/추세선/네비게이터/
+                스크롤바/메뉴), selection.ts(마킹+선택 뷰),
+                legend.ts(항목+페이지네이션), tooltip.ts(툴팁/크로스헤어)
   svg-impl.ts   ✅ Phase 6 — svgInnerImpl/svgStringImpl (체인 주입)
   svg.ts        ✅ Phase 6 — 내장 체인 주입 얇은 진입점
   view.ts       ✅ Phase 5/6 — renderIntoView/createSvgRenderer/
@@ -149,6 +156,22 @@ packages/core/src/
      기본값 바인딩은 mount.ts로 이동해 svg.js→defaults 경로 격리
    - `ChartCoreOptions.emitters` + `host.registerGeometryEmitter` ✅
    - lite 의존 그래프 검증: lite.ts → render/defaults·svg·core 미도달
+7. **Phase 7** — `buildSnapshot` 부속 뷰 빌더 분해 ✅
+   - `snapshot/context.ts` — `SnapCtx`: 플래그/옵션/스케일 함수/
+     컨트롤러 상태를 읽기 전용 번들로 전달 — 빌더가 `this` 대신
+     순수 컨텍스트만 본다 (ChartCoreImpl 역참조 없음)
+   - `axes.ts` 도메인+축 뷰 · `data-labels.ts` kind별 라벨 ·
+     `marks.ts` 기준선/영역·인라인 주석·그린 주석 · `overlays.ts`
+     에러바/추세선/네비게이터/스크롤바/메뉴 · `selection.ts` 선택
+     마킹+범위 뷰 · `legend.ts` 항목+페이지네이션 · `tooltip.ts`
+     툴팁/크로스헤어
+   - `buildSnapshot`은 오케스트레이터로 축소 — 플롯/스케일 계산 후
+     SnapCtx 하나로 섹션 빌더들을 순서대로 호출
+   - a11y(`describePoint`)는 map-state 노드메타가 필요해 코어 잔류
+   - core-impl.ts 6325 → 2249줄 (처음 대비 64% 축소)
+   - `snapshot.test.ts` 신규 22개 — 메뉴/스크롤바/선택 뷰/다중축
+     마크/주석 변형/툴팁 shared·point·none/범례 페이지 클램프/
+     선택 마킹/에러바 방향/참조 무효화
 
 순서가 중요하다 — 1→2로 스냅샷 생성 경계를 먼저 깨끗하게 만들어야
 그 위의 `CoreHost`/`ChartRenderer` 인터페이스가 순환 참조 없이 성립한다.
