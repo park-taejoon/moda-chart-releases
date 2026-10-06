@@ -248,6 +248,41 @@ mountChartLite(el, {
   내장 체인을 참조하지 않아 lite 경로가 풀 빌더·이미터를 끌어오지
   않는다.
 
+## 4-2. 능력 비활성화 — `options.disabled`
+
+lite가 **코드를 번들에서 빼는** 것이라면 `disabled`는 코드를 둔 채
+**동작만 끄는** 옵션이다. `Chart` 타입은 그대로라 비파괴다.
+
+```ts
+new ChartCore({
+  series,
+  disabled: ["zoom", "export"], // 끌 능력 슬라이스
+});
+```
+
+능력 이름은 `Chart*Api` 슬라이스와 대응한다:
+
+| 값          | 끄는 API                                                            |
+| ----------- | ------------------------------------------------------------------- |
+| `zoom`      | zoomAt/panByPx/setZoomWindow/resetZoom/startDrag/nav\*/setSelection |
+| `drilldown` | drillDown/drillUp/drillUpAll                                        |
+| `drawing`   | setDrawMode/draw\*/addDrawing/getDrawings/clearDrawings             |
+| `map`       | mapZoomAt + 지도 드래그 팬                                          |
+| `search`    | search.load                                                         |
+| `export`    | print/emitPrint/toSVGString                                         |
+
+**관대한 실패 의미** — 비활성 능력의 메서드는 조용히 무시되고
+반환형은 중립값을 돌린다 (`drillDown`→`false`, `getDrawings`→`[]`,
+`toSVGString`→`""`, `search.load`→`false`). throw하지 않는다 —
+어댑터의 prop 동기화와 DOM 이벤트 바인딩이 조건 없이 호출하기
+때문이다. 기존 옵션 게이트(drilldown 미설정 시 `drillDown`→`false`)와
+같은 의미다.
+
+비활성 능력의 뷰 어포던스도 스냅샷에서 생략된다 — `.mc-zoom-reset`,
+`.mc-export-svg`/`.mc-export-png`, 네비게이터/스크롤바 스트립,
+컨텍스트 메뉴의 `reset-zoom`/`export-*` 내장 항목. 커스텀 메뉴
+항목만 남으면 그대로 열리고, 전부 빠지면 메뉴 자체가 열리지 않는다.
+
 ## 5. 지켜야 할 계약
 
 - `getSnapshot()` — 변경 전까지 같은 참조 (React `useSyncExternalStore` 등이 의존)

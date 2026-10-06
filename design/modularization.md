@@ -218,6 +218,96 @@ packages/core/src/
      `specOptions`를 엔트리에서 재export, 어댑터 호출부 변경 0
    - 테스트 수 불변 — 5렌더러 각 88개 it 그대로
 
+## 남은 후보
+
+구현 완료 시 이 목록에서 지운다.
+
+1. **`hit-test.ts`(582줄) 패밀리 분할** — 패밀리별 분기가 단일
+   디스패치라 억지 분할은 가독성을 해칠 우려. 분할보다 주석/
+   헬퍼 정리로 유지하는 쪽을 기본값으로 둔다
+2. **`buildSnapshot` 잔여 헬퍼 정리** — `selectionIndices`/
+   `xSpanRaw`/`catLeaf` 등 공유 헬퍼 일부를 snapshot/으로 이동
+   가능. 소규모, 필요 시 수행
+
+## Phase 10 — 런타임 능력 비활성화 ✅
+
+**목표** — `options`만으로 내장 능력 슬라이스를 끈다.
+`Chart` 인터페이스(타입)는 그대로 두고 동작만 비활성화한다 —
+타입에서 메서드를 빼는 것은 어댑터/사용자 코드를 깨는 breaking
+change라 이 경로로 가지 않는다.
+
+### API
+
+```ts
+type ChartCapability =
+  "zoom" | "drilldown" | "drawing" | "map" | "search" | "export";
+
+interface ChartCoreOptions {
+  /** 끌 내장 능력 — 기본값 전부 활성 */
+  disabled?: readonly ChartCapability[];
+}
+```
+
+### 의미 — 관대한 no-op (권장안)
+
+DrawingController의 `host.enabled()` 게이트 패턴을 모든 컨트롤러로
+일반화한다. 코어에 `isDisabled(cap)` 헬퍼를 두고 각 슬라이스의
+메서드 진입부에서 검사한다.
+
+- void 메서드: 조용히 무시 (`zoomAt`, `startDrag`, `addDrawing`,
+  `openMenu`, `navDrag*` …)
+- 반환 메서드: 중립값 반환 (`drillDown` → `false`,
+  `getDrawings` → `[]`, `search.load` → `Promise.resolve(false)`,
+  `isDragging` → `false`)
+- throw 안 함 — 어댑터의 prop 동기화와 view-bindings의 DOM 이벤트가
+  조건 없이 호출하므로 throw는 호출자를 깨뜨린다. 기존 옵션 게이트
+  (`drilldown` 미설정 시 `drillDown` → `false`)와 같은 관대한 의미로
+  통일한다
+
+#### 대안과 기각 사유
+
+- **(b) throw** — 디버깅은 명확하지만 어댑터가 무조건 호출하는
+  경로(prop 동기화·이벤트 바인딩)를 전부 가드해야 해 breaking과
+  다름없다
+- **(c) 메서드 제거 + 축소 타입** — `Chart`가 슬라이스 합집합이라
+  `ChartLite = Base+Data+…` 조합은 가능하지만, 런타임에 메서드가
+  없으면 호출 시 TypeError로 죽어 (b)와 같은 breaking이다.
+  컨트롤러 코드까지 번들에서 빼려면 core-impl의 정적 import를
+  선택 주입으로 바꿔야 하며 이는 별도 Phase로 분리한다
+
+### DOM 계약 수준
+
+- **수준 1 (최소)** — 메서드만 no-op. 뷰 어포던스(줌 리셋 버튼,
+  그리기 툴바, 메뉴 항목)는 옵션으로 이미 제어 가능하므로
+  사용자 책임으로 둔다
+- **수준 2 (권장)** — 스냅샷 빌더가 disabled 능력의 어포던스도
+  생략 (줌 리셋 버튼, 그리기 툴바, contextMenu의 해당 항목).
+  conformance에 "disabled 시 해당 DOM 미렌더" 계약 추가
+
+### 구현 결과 ✅
+
+- `ChartCapability` 타입 + `options.disabled` (`types/input.ts`)
+- `isDisabled` 헬퍼 — updateDelta 반영을 위해 매 호출 시 options를
+  다시 읽는다 (`core-impl.ts`)
+- 게이트 — `Chart*Api` 슬라이스별 진입부 가드: zoom
+  (startDrag/줌창/팬/선택/네비게이터), drilldown, drawing,
+  map(mapZoomAt + 지도 드래그 팬), search(`load`→`false`),
+  export(print/emitPrint/`toSVGString`→`""`).
+  컨트롤러가 아닌 공개 메서드 경계에서 막아 내부 경로
+  (setState 복원 등)는 그대로 둔다
+- 수준 2 DOM — `snap.disabled` 필드 → 렌더러가 `.mc-zoom-reset`,
+  `.mc-export-*`, `.mc-drillup`을 숨기고, snapshot/overlays가
+  네비게이터·스크롤바 스트립과 메뉴 내장 항목을 생략한다
+  (항목이 전부 빠지면 메뉴 자체를 열지 않는다)
+- conformance 계약 2개 신규 — 5렌더러 각 90개 it
+- `docs/guide/plugins.md` §4-2 — 능력 표 + 관대한 실패 의미
+
+### 마이그레이션
+
+기본값 전부 활성 — 비파괴. 기존 사용자는 변경 없음.
+코드 제거(트리셰이킹) 목적이면 disabled가 아니라 lite 경로의
+builders/emitters 선택을 쓴다 — disabled는 동작만 끈다.
+
 순서가 중요하다 — 1→2로 스냅샷 생성 경계를 먼저 깨끗하게 만들어야
 그 위의 `CoreHost`/`ChartRenderer` 인터페이스가 순환 참조 없이 성립한다.
 
