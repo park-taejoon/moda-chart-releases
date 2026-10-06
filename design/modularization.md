@@ -105,8 +105,12 @@ packages/core/src/
   svg.ts        ✅ Phase 6 — 내장 체인 주입 얇은 진입점
   view.ts       ✅ Phase 5/6 — renderIntoView/createSvgRenderer/
                 attachChartView (renderer 인자 필수 — 기본값은 mount.ts)
+  view-bindings.ts ✅ Phase 8b — bindChart 인터랙션 이벤트 배선
+  view-download.ts ✅ Phase 8b — downloadSVG/downloadPNG (Chart 전용)
   types/        ✅ Phase 8 — input(옵션)/views(스냅샷)/events/api
                 (types.ts는 barrel — import 경로 무파괴)
+  conformance/  ✅ Phase 9 — context(마운트/픽스처) + basic/ibchart/
+                ag/gap 스펙 그룹 (conformance.ts는 조합 엔트리)
 ```
 
 ## 마이그레이션 단계
@@ -196,6 +200,23 @@ packages/core/src/
    - `core.test.ts`(3122줄) → 3분할: core(기본/인터랙션) +
      core-charts(지도/계층/플로우/극좌표) + core-advanced(그리기/
      search/XML/updateDelta). 공용 픽스처는 test-utils.ts
+9. **Phase 9** — `conformance.ts`(1878줄) 스펙 분할 ✅
+   - `conformance/context.ts` — `MountedChartHandle`/`ConformanceMount`
+     타입 + `specOptions` 픽스처 + `mountSpecChart` (export)
+   - `conformance/basic.ts` — 기본 렌더 계약 (뼈대/축/범례/툴팁/줌/
+     키보드/테마/빈·로딩 상태)
+   - `conformance/ibchart.ts` — IBChart 대비 계약
+     (step/spline/range/워드클라우드/주석/그리기)
+   - `conformance/ag.ts` — AG Charts 대비 계약
+     (레이더/게이지/계층/플로우/선형 액시스 등)
+   - `conformance/gap.ts` — benchmark.md 갭 개발 계약
+     (boxplot/네비게이터/스크롤바/도넛/프로토타입 액시스 등)
+   - `conformance.ts`는 조합 엔트리로 축소 — `runChartConformance`가
+     describe 안에서 `register*Specs(mount)`를 동기 호출.
+     `it` 등록은 모듈 평가 시점에 일어나므로 비동기 호출 금지
+   - 공개 API 보존 — 타입(`MountedChartHandle`/`ConformanceMount`)과
+     `specOptions`를 엔트리에서 재export, 어댑터 호출부 변경 0
+   - 테스트 수 불변 — 5렌더러 각 88개 it 그대로
 
 순서가 중요하다 — 1→2로 스냅샷 생성 경계를 먼저 깨끗하게 만들어야
 그 위의 `CoreHost`/`ChartRenderer` 인터페이스가 순환 참조 없이 성립한다.

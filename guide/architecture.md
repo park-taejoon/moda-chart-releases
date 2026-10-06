@@ -58,7 +58,10 @@
 |                                      | 이미터 체인 주입본 (`svgInnerImpl`)     |
 | `packages/core/src/svg.ts`           | 풀 진입 — 내장 이미터 주입 `svgInner`   |
 |                                      | (기본 `svgRenderer`는 mount.ts 소유)    |
-| `packages/core/src/conformance.ts`   | 5렌더러 공용 DOM 계약 스펙              |
+| `packages/core/src/conformance.ts`   | 공용 계약 스펙 엔트리 —                 |
+|                                      | `runChartConformance` 조합기            |
+| `packages/core/src/conformance/`     | 스펙 본문 — context(마운트/픽스처) +    |
+|                                      | basic/ibchart/ag/gap describe 그룹      |
 | `packages/*/src`                     | 어댑터 — 바인딩만, 로직 없음            |
 | `apps/dev-*`                         | 데모 — 기능 체크리스트 + 실제 옵션 사용 |
 | `e2e/`                               | Playwright — helpers.ts의 apps 루프     |
