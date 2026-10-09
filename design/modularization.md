@@ -314,6 +314,142 @@ builders/emitters 선택을 쓴다 — disabled는 동작만 끈다.
 순서가 중요하다 — 1→2로 스냅샷 생성 경계를 먼저 깨끗하게 만들어야
 그 위의 `CoreHost`/`ChartRenderer` 인터페이스가 순환 참조 없이 성립한다.
 
+## Phase 11 — 조직도 모듈화·인터페이스 강화 ✅
+
+**목표** — organization 차트의 레이아웃/렌더를 독립 모듈로 분리하고
+노드 카드·접기/펼치기를 공개 인터페이스로 노출한다.
+
+### 구현 결과
+
+- `org-layout.ts` — `layoutOrganization`을 `hierarchy.ts`에서 추출.
+  `OrgLayoutOptions`으로 `orientation`(vertical/horizontal),
+  `collapsed`(path 집합), `nodeWidth`/`nodeHeight`를 받는다.
+  `hierarchy.ts`는 재export로 공개 경로(`index.ts`)를 유지한다
+- `render/organization.ts` — 노드를 `.mc-org-item` 카드 그룹으로
+  렌더: 기존 `rect.mc-org-node` + 카드 내부 `.mc-org-name`/`.mc-org-sub`
+  - `.mc-org-toggle` 배지(자식 있는 노드만). 범용
+    `.mc-data-label` 채널의 org 분기는 제거됨
+- 타입 — `ChartTreeNode.subtitle`/`color`, `ChartOrgOptions`
+  (`options.organization`), `OrgNodeView.path`/`subtitle`/`hasChildren`/
+  `collapsed`/`toggle`, `ChartOrgApi.toggleOrgNode(index)`,
+  `orgToggle` 이벤트 `{index, collapsed}`
+- 상태 — `inter.orgCollapsed`는 TreeDatum.path 집합으로 관리해
+  DFS index가 레이아웃 재계산에 흔들려도 접기 상태가 유지된다
+- 인터랙션 — `view-bindings`가 `.mc-org-toggle` 클릭을 포인트
+  클릭과 분리해 `toggleOrgNode`로 라우팅한다
+
+### 마이그레이션
+
+비파괴 — 새 필드/옵션/메서드 전부 선택적. org 라벨이
+`.mc-data-label`에서 `.mc-org-name`으로 이동한 것만 DOM 셀렉터
+차이 — `dataLabels.formatter`는 조직도 이름에 더 이상 적용되지 않는다
+(노드 카드가 `tree[].name`/`subtitle`을 직접 렌더).
+
+## Phase 12 — 조직도 품질 개선 ✅
+
+Phase 11의 카드/접기 기반 위에 인터페이스·상태·a11y 갭을 메웠다.
+
+### 구현 결과
+
+- `build/organization.ts` — org 뷰 조립을 build/hierarchy.ts에서 추출.
+  유효 접힘 해석(`effectiveOrgCollapsed`)을 캡슐화:
+  `유효 = (입력 collapsed:true 시드 ∪ 사용자 접힘) − 사용자 펼침`
+- `ChartTreeNode.collapsed` — 초기 접힘 시드. 사용자가 시드 노드를
+  펼치면 `inter.orgExpanded`가 시드를 덮어써 토글이 되돌아가지 않는다
+- `ChartOrgApi` 확장 — `setOrgNodeCollapsed`(명시 설정, 같은 상태는
+  no-op), `expandOrgAll`(사용자 접힘 + 시드까지 전부 펼침 —
+  시드 path는 빌더 side `orgSeeds`로 전달), `isOrgNodeCollapsed`
+- `orgToggle` 페이로드에 `name` 추가
+- `ChartState.orgCollapsed`/`orgExpanded` — getState/setState 왕복
+- `resetInteraction`이 org 접힘 두 세트를 비움 — hiddenSlices와 같은
+  뷰 상태로 통일 (드릴/데이터 변경 시 stale path 방지)
+- a11y — `.mc-org-toggle`에 `role="button"`/`aria-expanded`/`aria-label`,
+  카드 내부 텍스트에 `aria-hidden`, 노드 aria-label에 부제 포함
+- 히트 라벨 — `name (subtitle)` 형태로 툴팁 제목에 부제 병기
+
+## Phase 13 — 조직도 탐색·카드 확장 ✅
+
+IB ORG#(아이비리더스 조직도 솔루션) 대비 갭 분석에서 도출한
+라이브러리 경계 내 항목 3개를 구현했다 — 대형 조직 탐색,
+프로필 카드, 카드 커스터마이징. 편집(DnD)/DB 연동은 솔루션 영역이라
+의도적으로 제외.
+
+### 구현 결과
+
+- `organization.panZoom` — 휠 줌·드래그 팬·더블클릭/Reset 원복.
+  지도와 같은 화면 변환(`mapState.tf` 공유, screen = c + k·(p−c) + t)을
+  `.mc-org-vp` 그룹에 걸고 hit-test는 포인터를 역변환한다.
+  `zoomAt`/`startDrag`가 org를 canvas 변환 경로로 라우팅하고
+  `snap.zoomed`가 tf 편차도 반영한다. `disabled:["zoom"]`로 차단
+- `ChartTreeNode.image` → `OrgNodeView.image` — 카드 좌측 원형 클립
+  사진(`.mc-org-photo` 링 + `.mc-org-photo-img`), 텍스트는 우측
+  start 정렬로 전환
+- `organization.renderNode(n)` — 카드 내부 커스텀 SVG 콜백.
+  반환 문자열이 사진/이름/부제를 대체하고, undefined/null은 기본 카드.
+  박스 rect(히트·포커스·선택·aria)와 접기 배지는 항상 코어가 그린다 —
+  DOM 계약이 깨지지 않는다. 콜백은 지오메트리(`g.renderNode`)를 통해
+  스냅샷까지 실려 `toSVGString` export에도 동일하게 적용된다
+- 어댑터 4종이 `ChartOrgApi`/`ChartOrgOptions`/`OrgLayoutOptions`/
+  `OrgNodeView`/`OrgLinkView`를 재export (누락 보강)
+
+## Phase 14 — seriesAfterAnimate 이벤트 ✅
+
+IBChart 이벤트 대응표의 마지막 ❌ — 시리즈 트랜지션 종료 통지.
+
+### 구현 결과
+
+- `seriesAfterAnimate` `{ updating: boolean }` — 진입/갱신 트랜지션이
+  끝나는 시점에 1회 발행한다. `.mc-series`는 렌더(innerHTML 교체)마다
+  `mc-enter`/`mc-update`를 다시 재생하므로 매 `invalidate`가 하나의
+  애니메이션 사이클 — 코어가 `animation.duration` 타이머로 종료를
+  예약한다 (DOM 이벤트 의존 없이 커스텀 렌더러에도 동일 계약)
+- 예약 지점: `invalidate()`(모든 갱신 경로) + `emitReady()`(초기
+  마운트 — invalidate를 거치지 않는 첫 렌더). `updating`은
+  `data.pendingUpdate`가 buildSnapshot에 소비되기 전에 캡처한다
+- 연속 invalidate는 마지막 사이클만 발행(이전 트랜지션은 덮어씌워짐),
+  `animation:false`/`dispose` 후는 미발행. DOM/렌더러 무관하게 코어가
+  소유하므로 어댑터 변경 없이 5렌더러 동일 동작
+
+## Phase 15 — 크로스헤어 밴드 highlight ✅
+
+shared 툴팁의 활성 카테고리 배경 음영 (IBChart band highlight 해당).
+
+### 구현 결과
+
+- `snap.crosshair`를 `number`(가이드선 x)에서 `CrosshairView`로 확장 —
+  `{ pos, horizontal, band }`. `band`는 band 축의 카테고리 슬롯
+  (`catStep`) 전체를 덮는 스트립으로 `.mc-crosshair-band` rect를 렌더.
+  선형/시간 축은 슬롯이 없어 `band: null`
+- 수평 막대는 카테고리가 y 방향이라 가로 스트립 + 수평 가이드선을
+  그린다 — 기존 수직선이 y 좌표를 x로 찍던 잠재 버그도 함께 수정
+- 줌 창 가장자리의 부분 슬롯은 플롯 경계로 클램프
+- 색상은 `--chart-crosshair-band-color` 변수(라이트/다크 각각)
+- `CrosshairView`를 코어 index + 어댑터 4종 재export에 추가
+
+## Phase 16 — errorbar 독립 타입 ✅
+
+`series.errors` 오버레이와 별개로 IBChart의 `errorbar` 1급 타입을
+구현했다 — 기존 오버레이는 그대로 유지(하위 호환).
+
+### 구현 결과
+
+- **입력** — `series[].ranges: [low,high][]`(range-bar와 동일 스키마),
+  선택적 `values`(중심값/평균 마커). `type:"errorbar"` 또는 혼합 차트의
+  `series[].type` 오버라이드로 사용. `categories` 생략 시 `ranges` 길이로
+  카테고리 자동 도출
+- **뷰** — `WhiskerView` + `GeometryView` 변형 `kind:"errorbar"`.
+  `{c, lo, hi, v?, cap, low, high, label, color?, focused, dimmed,
+selected}` — 수직은 c=x·lo/hi=y, 수평은 c=y·lo/hi=x
+- **렌더** — 캡+심을 한 path `.mc-eb`로 출력(`.mc-error`와 같은 구조),
+  `values`가 있으면 `.mc-eb-mean` 원 마커. `.mc-type-errorbar` 그룹,
+  `data-series-id`/`data-index` 계약. `.mc-eb`는 path morph 대상
+  (`morphKey`에 `data-index`를 포함해 위스커별 매칭)
+- **배선** — 축 도메인에 ranges 양끝+중심값 포함, 데이터 라벨
+  "low–high", 툴팁 앵커(중심값>위스커 상단), 히트 테스트는 심의
+  lo/mid/hi/mean 4샘플 근사, 선택·키보드 포커스·`direction:"horizontal"`
+  지원
+- **CSV/a11y 표** — 기존 `cellText`의 `low~high` 규약 재사용
+
 ## 지켜야 할 계약
 
 1. **`getSnapshot()` 참조 안정성** — 스냅샷 캐시는 파사드에 유지.

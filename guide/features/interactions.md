@@ -17,16 +17,66 @@ pie/donut에서는 슬라이스 단위(`slice:N`)로 토글된다.
 클릭하면 토글과 함께 `legendCheck` `{ id, checked }` 이벤트가 발행된다
 — 항목 텍스트 클릭은 기존처럼 `legendToggle`만 발행한다.
 
+### 범례 집계값 · 전체 토글
+
+- `legend: { value: "sum" | "avg" | "latest" | (values) => string }` —
+  항목 라벨 옆에 집계값을 `.mc-legend-value`로 표시한다.
+  pie/donut 등 슬라이스 범례는 해당 카테고리의 시리즈 값들이 넘어간다.
+- `legend: { toggleAll: true }` — 범례 맨 앞에 `.mc-legend-all`
+  버튼을 렌더한다. 전부 보이면 클릭 시 전부 숨기고, 하나라도
+  숨겨져 있으면 전부 표시한다 (`chart.toggleAllLegend()`).
+  발행 이벤트: `legendAllToggle` `{ visible }` + 시리즈별
+  `visibilityChange`.
+
+### 커스텀 범례 렌더러
+
+`legend: { render: (ctx) => string }` — 반환 문자열이 `.mc-legend`의
+innerHTML을 통째로 교체한다 (tooltip.render 패턴).
+
+```ts
+legend: {
+  render: (ctx) =>
+    ctx.items
+      .map(
+        (it) =>
+          `<button class="mc-legend-item my-pill" data-id="${it.id}">` +
+          `${it.label}${it.value != null ? ` (${it.value})` : ""}</button>`,
+      )
+      .join(""),
+},
+```
+
+`ctx`에는 페이지네이션 적용 후 항목(`items`), 페이지 정보(`page`),
+`allVisible`/`checks`/`toggleAll`, 내장 문구(`labels`)가 들어간다.
+
+내장 인터랙션은 `.mc-legend`에 위임으로 바인딩되므로 커스텀 마크업이
+DOM 계약을 지키면 그대로 동작한다:
+
+| 클래스                   | 계약                                        |
+| ------------------------ | ------------------------------------------- |
+| `.mc-legend-item`        | `data-id` 필수 — 클릭 시 토글, hover 시 dim |
+| `.mc-legend-check`       | 항목 안 체크박스 — `legendCheck` 경로       |
+| `.mc-legend-all`         | 전체 토글 클릭                              |
+| `.mc-legend-prev`/`next` | 페이지네이션 이동                           |
+
+반환값은 escape 없이 삽입되므로 신뢰된 마크업만 반환할 것.
+런타임에는 `chart.setLegend(opts)`로 범례 옵션을 통째로 교체한다.
+
 ## 툴팁
 
 `tooltip: "point" | "shared" | "none" | { mode, format }`.
 
 - `point` — 가장 가까운 포인트 1개
 - `shared` — 같은 x 카테고리의 모든 시리즈 행 + `.mc-crosshair` 가이드
+  - 활성 카테고리 배경 밴드 `.mc-crosshair-band`(band 축, 수평 막대는
+    가로 스트립). 선형/시간 축은 슬롯이 없어 가이드선만 나온다
 - `format(value, ctx)` — 값 표시 문자열 (ctx: seriesId/name/label/percent)
 - `render(ctx)` — 툴팁 전체를 HTML 문자열로 렌더한다
   (`.mc-tooltip`의 innerHTML로 삽입). 반환값은 escape되지 않으므로
   신뢰된 마크업만 반환할 것 (AG Charts tooltip.renderer 해당)
+- `pin: true` — 클릭으로 툴팁을 고정한다 (`.mc-tooltip.mc-pinned`).
+  같은 포인트 재클릭·빈 영역 클릭·Esc로 해제하며, 고정된 툴팁은
+  포인터가 벗어나도 닫히지 않는다. API: `chart.unpinTooltip()`.
 
 ## 포인트 hover · 클릭
 
@@ -123,6 +173,34 @@ zoom: { axes: "xy", select: true }
   가리킨다 — 그쪽 축이 화면상 x 방향으로 렌더된다.
 - 드릴다운/타입 전환/데이터 교체 시 두 창 모두 리셋된다.
 
+### 줌 프리셋
+
+`zoom: { presets: ZoomPreset[] }` — 툴바 아래에 범위 버튼 행
+(`.mc-presets` > `.mc-preset-btn`)을 렌더한다. 각 프리셋은 `label` +
+`window`·`count` 중 하나:
+
+```ts
+zoom: {
+  presets: [
+    { label: "전체" },                       // 리셋
+    { label: "최근 4", count: 4 },           // 도메인 끝에서 4개
+    { label: "앞쪽", window: { min: 0, max: 2 } },
+  ],
+}
+```
+
+활성 프리셋에 `.mc-active`가 붙는다. API: `chart.applyZoomPreset(i)`.
+
+## 전체화면
+
+툴바의 `.mc-fullscreen` 버튼(항상 렌더)이 루트 요소의 전체화면을
+토글한다. 네이티브 Fullscreen API를 지원하면 `requestFullscreen`을
+호출하고, 지원하지 않거나 거부되면 `.mc-root.mc-fullscreen-on`
+클래스 폴백만 둔다. 브라우저 Esc로 나가도 `fullscreenchange`
+리스너가 코어 상태를 동기화한다. API: `chart.setFullscreen(bool)` /
+`chart.toggleFullscreen()` — `fullscreenChange` `{ fullscreen }`
+이벤트 발행.
+
 ## 네비게이터 (미니맵)
 
 `navigator: true | { height }` — 플롯 아래에 전체 x 도메인 개요와
@@ -143,7 +221,7 @@ zoom: { axes: "xy", select: true }
 
 `contextMenu: true | { items }` — 플롯 우클릭(contextmenu)으로
 `.mc-menu`를 연다 (AG Charts contextMenu 해당). 내장 항목은
-`reset-zoom`(줌 리셋)·`export-svg`·`export-png`이고,
+`reset-zoom`(줌 리셋)·`export-svg`·`export-png`·`export-csv`이고,
 `items: [{ id?, label }]`로 커스텀 항목을 뒤에 붙인다. 커스텀 항목
 클릭은 `menuAction` `{ id }` 이벤트로 전달되고 메뉴는 닫힌다.
 메뉴 바깥 클릭이나 Esc로도 닫힌다. 코어 API: `chart.openMenu(px, py)` /
@@ -315,7 +393,9 @@ gauge는 값 아크만 히트 대상이며 범례가 없다. 세 타입 모두
 | `pointUpdate`      | `{ seriesId, index, value }` — updatePoint 경유   |
 | `redraw`           | `{}` — redraw() 호출 시                           |
 | `resize`           | `{ width, height }` — setSize/ResizeObserver 경유 |
-| `export`           | `{ format }` — svg/png                            |
+| `export`           | `{ format }` — svg/png/csv                        |
+| `legendAllToggle`  | `{ visible }` — legend.toggleAll 전체 토글        |
+| `fullscreenChange` | `{ fullscreen }` — 전체화면 진입/해제             |
 | `drillupall`       | `{ depth }` — drillUpAll()로 루트 복귀            |
 | `legendCheck`      | `{ id, checked }` — 범례 체크박스 토글            |
 | `menuAction`       | `{ id }` — 컨텍스트 메뉴 커스텀 항목 클릭         |

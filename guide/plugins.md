@@ -180,6 +180,42 @@ const annotating: ChartRenderer = {
 `toMarkup`을 구현하지 않으면 `downloadSVG`/`toSVGString` 계열의
 SVG 내보내기는 그 렌더러로 지원되지 않는다(export 경로는 SVG 전용).
 
+## 3-1. 내장 Canvas2D 렌더러 — `createCanvasRenderer`
+
+`createCanvasRenderer()`는 `ChartRenderer` 계약의 Canvas2D 구현이다.
+`.mc-svg` 대신 `<canvas class="mc-canvas">`에 스냅샷을 그리고,
+툴팁·범례·메뉴·툴바 등 HTML 크롬과 `.mc-overlay` 인터랙션은 SVG
+렌더러와 동일한 DOM 계약을 유지한다 (`updateChartChrome` 공유).
+
+```ts
+import { createCanvasRenderer } from "@moda-chart/core";
+
+// vanilla
+mountChart(el, { ...options, renderer: createCanvasRenderer() });
+
+// 어댑터 — ChartView의 renderer prop
+<ChartView chart={chart} renderer={createCanvasRenderer()} />
+```
+
+SVG 렌더러와의 차이:
+
+- **지오메트리 DOM 없음** — `.mc-bar`/`.mc-point` 같은 요소가 생기지
+  않는다. 히트 테스트는 코어의 스냅샷 좌표 경로라 호버·클릭·드래그·
+  줌·키보드 내비는 동일하게 동작한다.
+- **네비게이터/스크롤바/조직도 토글** — DOM 요소가 없으므로 스트립
+  드래그와 토글 배지 클릭은 좌표 라우팅으로 처리한다
+  (view-bindings.ts).
+- **morph/enter/exit 트랜지션 미적용** — CSS/DOM 기반 애니메이션이라
+  갱신 시 최종 프레임을 즉시 그린다.
+- **색상 해석** — `var(--chart-*)` 토큰을 `.mc-root`의 계산 스타일에서
+  읽어 실제 색으로 변환한다 (canvas/theme.ts). `theme.vars` 인라인
+  주입도 동일하게 반영된다.
+- **내보내기** — `toMarkup` 미구현. SVG/PNG/CSV 보내기는 코어의
+  `toSVGString` 경로라 렌더러와 무관하게 그대로 동작한다.
+
+렌더러는 인스턴스를 재사용해야 한다(아바타/주석 이미지 캐시 보유) —
+React처럼 렌더가 반복되는 환경에서는 `useMemo` 등으로 고정한다.
+
 ## 4. 공개 능력 슬라이스 — `Chart*Api`
 
 공개 인터페이스 `Chart`는 능력별 슬라이스의 합집합이다.

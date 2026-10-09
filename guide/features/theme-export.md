@@ -26,13 +26,19 @@
 
 ## 보내기
 
-툴바의 `.mc-export-svg`/`.mc-export-png` 버튼, 또는 API:
+툴바의 `.mc-export-svg`/`.mc-export-png`/`.mc-export-csv` 버튼,
+컨텍스트 메뉴의 내장 항목, 또는 API:
 
 ```ts
 chart.toSVGString(); // 인라인 스타일이 굳어진 독립 SVG 문서
+chart.toCSV(); // "category,시리즈명…" 헤더 + 행 CSV
 ```
 
 - SVG — `downloadSVG(chart)`가 blob 다운로드를 트리거한다
 - PNG — `downloadPNG(chart)`가 SVG를 2배 해상도 canvas에 그려
   data URL로 저장한다
+- CSV — `downloadCSV(chart)`가 `chart.toCSV()` 결과를 저장한다.
+  쉼표/따옴표가 있는 라벨은 RFC 4180 규칙으로 인용된다
+- 파일명 — `exporting: { filename: "sales" }`로 기본명을 바꾼다
+  (기본 `"chart"` → `chart.svg`/`chart.png`/`chart.csv`)
 - 발행 이벤트: `export: { format }`

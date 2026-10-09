@@ -26,6 +26,8 @@ new ChartCore({
 - `label` — 축 제목 (`.mc-axis-label`)
 - `grid` — 플롯 안쪽 그리드선 (`.mc-grid-line`)
 - `format` — 눈금 라벨 포맷터
+- `compact` — 큰 값을 `1.2K`/`3.4M`/`5B`로 축약한다
+  (`format`이 있으면 `format`이 우선)
 - `tickCount` — 목표 눈금 수 (nice step으로 조정)
 
 ## 그룹 카테고리 축

@@ -14,14 +14,21 @@ new ChartCore({
 ```
 
 - `series[].values` — `categories`와 인덱스로 정렬되는 값 배열
-- `series[].points` — `{ x, y, z?, color?, name? }` 명시 좌표
-  (scatter/시계열). `color`는 포인트 고정색, `name`은 라벨 대체 이름
-- `series[].ranges` — `[low, high][]` 구간 데이터 (range-bar/range-area)
+- `series[].points` — `{ x, y, z?, color?, name?, url?, urlTarget? }`
+  명시 좌표 (scatter/시계열). `color`는 포인트 고정색, `name`은
+  라벨 대체 이름, `url`은 클릭 네비게이션 링크 (아래 포인트 링크)
+- `series[].ranges` — `[low, high][]` 구간 데이터
+  (range-bar/range-area/errorbar)
 - `series[].ohlc` — `[open, high, low, close][]` 봉 데이터
   (candlestick/ohlc)
 - `series[].box` — `[min, q1, median, q3, max][]` 5수치 (boxplot)
 - `series[].itemStyle` — `(ctx) => { color?, name? }` 콜백으로
   포인트별 색/이름 오버라이드 (AG `itemStyler` 해당)
+- `series[].marker` — `{ shape, size, enabled }` 포인트 심볼
+  (AG `marker` 해당). shape은 circle(기본)/square/triangle/diamond/
+  star/plus/cross — circle 외는 `.mc-point.mc-<shape>` `<path>`로
+  그리고, plus/cross는 스트로크 심볼이다. `points[].shape`/`size`가
+  포인트별로 우선하며, `enabled: false`는 마커만 숨긴다
 - `series[].mapPoints`/`mapLines` — map 타입의 경도·위도
   마커/연결선 레이어
 - `series[].errors` — `[하한 오차, 상한 오차][]` 에러바 오버레이
@@ -51,6 +58,7 @@ new ChartCore({
 | `funnel`/`pyramid`    | `.mc-slice`                          | 카테고리별 세로 밴드                  |
 | `range-bar`           | `.mc-range-bar`                      | `ranges`의 [low,high] 구간 막대       |
 | `range-area`          | `.mc-range-area`                     | 상한선+하한선 사이 밴드               |
+| `errorbar`            | `.mc-eb`(+`.mc-eb-mean`)             | `ranges` 위스커, `values` 중심 마커   |
 | `candlestick`         | `.mc-candle`+`.mc-candle-wick`       | `ohlc` 봉, `.mc-candle-up`/`-down`    |
 | `ohlc`                | `.mc-ohlc`(stem/open/close)          | `ohlc` 데이터, 캔들 대신 틱 선분      |
 | `boxplot`             | `.mc-box`(body/whisker/cap/median)   | `box` 5수치 요약                      |
@@ -85,6 +93,8 @@ new ChartCore({
 - `heatmap`은 `series[].values` 행렬을 셀 그리드로 그린다.
   색 스케일은 `heatmap: { from, to }` 옵션 또는
   `--chart-heat-from`/`--chart-heat-to` 변수로 바꾼다.
+  플롯 우하단에 연속값 범례(`.mc-scale` 그라데이션 바 + min/max
+  라벨)를 그리고 `heatmap: { legend: false }`로 끌 수 있다.
 - `funnel`/`pyramid`는 첫 시리즈의 카테고리 값을 세로 밴드로 그린다 —
   funnel은 다음 단계 폭이 아랫변, pyramid는 뾰족한 꼭대기.
   pie와 마찬가지로 범례는 카테고리 단위(`slice:N`)다.
@@ -93,6 +103,11 @@ new ChartCore({
 - `range-bar`/`range-area`는 `series[].ranges`의 `[low, high]`를 그린다.
   range-bar는 `direction: "horizontal"`도 지원한다. 값 축 도메인은
   구간의 최저~최고를 포함하도록 자동 확장된다.
+- `errorbar`는 `series[].ranges`의 `[low, high]`를 위스커(심+양끝 캡의
+  단일 path `.mc-eb`)로 그린다. `values`를 함께 주면 중심값(평균) 자리에
+  `.mc-eb-mean` 마커를 추가한다. `direction: "horizontal"`·혼합 차트의
+  `series[].type` 오버라이드·데이터 라벨·선택·포커스를 모두 지원한다.
+  선색은 시리즈 색(포인트 고정색은 itemStyle로).
 - `candlestick`은 `series[].ohlc`의 `[open, high, low, close]`를
   몸통+심지로 그린다. 종가≥시가는 `.mc-candle-up`(`--chart-up-color`),
   하락은 `.mc-candle-down`(`--chart-down-color`).
@@ -155,6 +170,76 @@ new ChartCore({
 - `organization`은 `series[].tree`를 위에서 아래로 펼치는 조직도다 —
   리프는 균등 슬롯, 부모는 자식 중심 위, 부모→자식 엘보 커넥터
   `.mc-org-link`. 축 없이 노드 hover/선택을 지원한다.
+  노드는 카드 그룹(`.mc-org-item`)으로 렌더되고 이름(`.mc-org-name`)과
+  부제(`.mc-org-sub`, `tree` 노드의 `subtitle`)를 카드 안에 표시한다 —
+  범용 `.mc-data-label` 채널은 쓰지 않는다. 노드 `color`는 카드 채움을
+  덮어쓴다.
+  `organization: { orientation: "horizontal" }`은 좌→우 수평 조직도로
+  전환하고, `nodeWidth`/`nodeHeight`로 카드 크기 상한을 조절한다.
+  `organization: { layout: "elbow" }`은 왼쪽 꺾은선 배치다 — 모든 노드가
+  DFS 순서로 한 행씩 차지하고 자식은 부모 오른쪽 아래 열로 들여쓴다.
+  링크는 부모 카드 좌측 스텁에서 세로로 내려와 각 자식 행에서 오른쪽으로
+  꺾이는 스파인 커넥터다 — 깊은 조직을 세로로 길게 나열할 때 쓴다.
+  `layout: "compact"`은 컴투어 패킹이다 — 인접 서브트리를 최소 간격으로
+  맞대고 전체를 중앙 정렬한다. 표준 배치가 리프 균등 슬롯으로 플롯 폭을
+  채우는 것과 달리 비대칭 트리의 빈 공간이 줄고, 카드 크기는 `nodeWidth`
+  상한을 유지한다(과밀 시 카드를 줄이지 않아 트리가 플롯보다 넓어질 수
+  있다 — `panZoom`과 함께 쓴다).
+  중첩 `tree` 대신 `series[].treeList`로 `{id, parentId}` 플랫 행을 바로
+  넣을 수 있다 — DB/Excel 조직 데이터를 그대로 쓰는 용도다. 부모를 못
+  찾거나 사이클인 행은 루트로 승격되고, 같은 기능의 독립 헬퍼로
+  `listToTree(items)`를 export한다. `tree`와 함께 주면 `tree`가 우선한다.
+  `tree` 노드의 `assistant: true`는 보조자 노드다 — 리프 슬롯을 차지하지
+  않고 부모 카드 트렁크 옆(vertical: 우측 / horizontal: 하측)에 붙는
+  `.mc-org-assist` 카드로 렌더된다. 비서실·보좌역 같은 부속 직위용이며,
+  elbow 배치에서는 일반 자식으로 나열된다.
+  자식이 있는 노드는 카드 가장자리의 `.mc-org-toggle` 배지로 하위
+  트리를 접는다 — `chart.toggleOrgNode(index)`로 코드에서도 토글할 수
+  있고 `orgToggle` 이벤트가 `{index, collapsed, name}`을 발행한다.
+  `setOrgNodeCollapsed(index, flag)`는 명시 설정,
+  `isOrgNodeCollapsed(index)`는 상태 조회, `expandOrgAll()`은 접힌
+  노드를 전부 펼친다. 접힌 노드는 리프 슬롯을 차지하며 형제
+  레이아웃이 재균등화된다.
+  `tree` 노드의 `collapsed: true`는 초기 접힘 시드다 — 해당 노드가
+  접힌 채 시작하고, 사용자가 펼치면 그 선택이 시드를 덮어쓴다.
+  접힘 상태(사용자 접힘 + 시드 펼침 오버라이드)는
+  `getState`/`setState`로 왕복된다.
+  노드의 `image`는 카드 좌측에 원형 클립 사진(`.mc-org-photo`)으로
+  렌더하고 텍스트는 우측 정렬된다 — HR 조직도의 프로필 카드 용도다.
+  `organization: { panZoom: true }`는 휠 줌·드래그 팬·더블클릭
+  원복을 켠다 — 노드/링크가 `.mc-org-vp` 그룹 transform으로 이동하고
+  히트 테스트는 포인터를 역변환한다. `organization.renderNode`는
+  노드 뷰를 받아 카드 내부 SVG 마크업을 반환하는 커스터마이징
+  콜백이다 — 반환 문자열이 기본 사진/이름/부제를 대체하며,
+  박스 rect(히트·포커스·aria)와 접기 배지는 코어가 그린다.
+  null/undefined를 반환한 노드는 기본 카드로 렌더된다.
+  `organization: { editable: true }`는 노드 Drag&Drop 리페어런팅을 켠다 —
+  노드 위 드래그는 팬 대신 이동 제스처가 되고 유효 드롭 대상은
+  `.mc-org-drop`으로 강조된다. 코드 편집은 `addOrgNode(parent,node)`
+  (parent=-1이면 루트)/`removeOrgNode(i)`/`moveOrgNode(i,parent)` —
+  이동·사이클 거부 결과는 `orgMove` 이벤트 `{index,name,from,to}`로
+  발행된다.
+  `organization: { searchable: true }`는 뷰포트 우상단에
+  `.mc-org-search` 입력을 띄운다 — 이름/부제 부분 문자열 매칭 노드는
+  `.mc-org-match`로 강조되고 Enter는 다음 매치로 순환, Escape는 해제한다.
+  코드 API는 `searchOrg(q)`(매치 수 반환)/`searchOrgNext()`/
+  `clearOrgSearch()`, 쿼리 변경은 `orgSearch` 이벤트 `{query,count}`로
+  발행된다. `organization.nodeMenu`는 노드 우클릭 컨텍스트 메뉴다 —
+  `true`면 자식 있는 노드에 접기/펼치기(+`editable`이면 노드 삭제)
+  내장 항목이 열리고, `{items:[...]}`이면 커스텀 항목이 덧붙는다.
+  커스텀 항목 선택은 `menuAction` 이벤트에 대상 노드 `index`와 함께
+  전달된다. 노드 밖 우클릭은 기존 `contextMenu` 플롯 메뉴로 폴백한다.
+  `organization: { minimap: true }`는 뷰포트 우하단에
+  `.mc-org-minimap` 인셋을 띄운다 — 전체 트리의 축소 사본
+  (`.mc-org-mm-node`)과 현재 뷰포트 사각형(`.mc-org-mm-view`)을 그리고,
+  클릭/드래그하면 해당 지점이 플롯 중앙에 오도록 팬한다.
+  `organization.panZoom`과 함께 켜면 휠 줌도 뷰포트 사각형에 반영된다.
+  SVG/캔버스 렌더러 모두 같은 HTML 인셋을 공유한다.
+  팬/줌이 적용된 상태에서는 뷰포트 밖 노드·링크가 자동으로 컬링된다 —
+  `OrgNodeView.visible`/`OrgLinkView.visible`이 `false`로 실리고
+  SVG·캔버스 렌더러가 그리지 않는다. 스냅샷에는 전체 트리가 유지되므로
+  미니맵·히트 테스트·키보드 포커스는 컬링과 무관하게 동작한다.
+  변환이 없는 평면 상태에서는 모든 노드가 `visible`이다.
 - `linear-gauge`는 첫 시리즈 첫 값을 수평 트랙 위 채움으로 그린다 —
   `gauge: { min, max, target }` 옵션을 다이얼 게이지와 공유한다.
 - `pictogram`은 카테고리 행마다 사람 아이콘을 값 비례로 채우는
@@ -167,10 +252,13 @@ new ChartCore({
   수평 막대 차트다 (인구 피라미드). `pyramidPop.leftSeries`(기본 1)개의
   시리즈가 좌측, 나머지가 우측이며 값 축 도메인은 ±대칭, 틱 라벨은
   절대값으로 표시된다. `direction` 옵션과 무관하게 항상 수평이다.
-- `map`의 `series[].mapPoints`(`{lon, lat, value?, label?, color?}`)는
-  지역과 같은 투영으로 `.mc-map-marker` 원을, `mapLines`
-  (`{from, to, label?}`)는 `.mc-map-line` 연결선을 그린다 —
+- `map`의 `series[].mapPoints`(`{lon, lat, value?, label?, color?,
+url?, urlTarget?}`)는 지역과 같은 투영으로 `.mc-map-marker` 원을,
+  `mapLines` (`{from, to, label?}`)는 `.mc-map-line` 연결선을 그린다 —
   마커는 hover/선택 대상이고 `value`가 있으면 sqrt 크기 스케일이다.
+  `url`이 있으면 `.mc-link`로 마킹되고 클릭 시 네비게이션한다
+  (아래 포인트 링크와 동일 — 마커 클릭은 음수 인덱스 `-1-i`로
+  `seriesClick`이 발행되고, 클러스터에 묶인 마커는 clusterSelect만).
 - 마커의 `image`는 원형 클립 아바타 핀(`.mc-map-avatar` + 링)으로
   렌더하고, `pulse`는 펄스 링(`.mc-map-pulse`)을 추가한다 —
   도식 "주변 사용자" 지도(프로필 핀/내 위치) 용도다.
@@ -262,10 +350,33 @@ chart.updateDelta({
 
 series/categories가 포함되면 데이터 갱신으로 간주해 `dataChange`가
 발행되고 `animation.updates`(기본 true)가 켜져 있으면 첫 렌더에
-`.mc-updating`이 붙어 `mc-update` 전환이 재생된다. 같은 키의
-`.mc-bar`/`.mc-point`는 이전 박스에서 새 박스로 translate/scale이
-보간된다(`.mc-morph`) — 키가 없는 path 계열(선/슬라이스)은
-morph 없이 `.mc-updating` 페이드만 적용된다.
+`.mc-updating`이 붙어 `mc-update` 전환이 재생된다. 이전 프레임과
+키가 같은 지오메트리는 `.mc-morph`로 보간된다 — rect/circle/line
+요소(`.mc-bar`/`.mc-point`/`.mc-bubble`/`.mc-heat-cell`/캔들·OHLC·
+박스플롯 부품·treemap/sankey 노드·게이지 등)는 이전 박스에서 새
+박스로 translate/scale이, path 요소(`.mc-line`/`.mc-area`/
+`.mc-slice`/`.mc-radar`/극좌표·계층·흐름 노드와 리본 등)는 명령
+구조가 같은 `d`의 숫자가 보간된다. 이전 프레임에 없던 요소(새
+포인트/시리즈)와 명령 구조가 바뀐 path는 `.mc-enter`로 진입
+페이드된다. 새 프레임에 키가 없는 요소(삭제된 포인트/시리즈)는
+`.mc-exit-layer`로 분리돼 `.mc-exit` 페이드아웃 후 제거된다 —
+조상의 transform 체인은 보존되므로 panZoom된 지도 요소도
+제자리에서 퇴장한다. 워드클라우드 텍스트·지도 지형처럼 갱신으로
+위치가 안 바뀌는 계열은 morph 대상이 아니다.
+
+트랜지션 종료는 `seriesAfterAnimate` 이벤트로 관측한다 (IBChart 해당):
+
+```ts
+chart.on("seriesAfterAnimate", (e) => {
+  // e.updating — true면 데이터 갱신 트랜지션, false면 진입/기타 렌더
+});
+```
+
+`.mc-series`는 렌더마다 `mc-enter`/`mc-update`를 다시 재생하므로
+매 스냅샷 변경이 하나의 애니메이션 사이클이다 — 각 사이클의
+`animation.duration`(기본 300ms) 경과 시점에 1회 발행한다. 연속
+변경은 마지막 사이클만 발행하고, `animation: false`면 발행하지
+않는다.
 
 ### 부가 데이터 — etcData (IBChart 해당)
 
@@ -279,29 +390,70 @@ series: [{ name: "매출", values: […], etcData: { code: "MTD" } }]
 chart.on("pointSelect", (e) => console.log(e.etcData)); // { code: "MTD" }
 ```
 
+### 포인트 링크 — url (IBChart 해당)
+
+`points[].url`이 있는 포인트는 `.mc-link` 클래스(pointer 커서)로
+마킹되고, 클릭하면 해당 URL로 네비게이션한다 — IBChart
+`<value url="…"/>` 해당. `urlTarget`은 `window.open`의 대상
+(기본 `"_self"`, `"_blank"`면 새 탭). url이 클릭을 소비하므로
+드릴다운/포인트 선택은 건너뛰고, `seriesClick` 페이로드에는
+`url` 필드로 전달된다. `javascript:`/`data:` 등 실행형 스킴은
+차단된다 (http(s)/mailto/tel/상대 경로만 허용).
+지도 마커는 `mapPoints[].url`/`urlTarget`으로 같은 동작을 얻는다
+(프로필 핀 → 상세 페이지 등).
+
+```ts
+series: [
+  {
+    name: "페이지",
+    points: [
+      { x: 0, y: 10, url: "/detail/a" },
+      { x: 1, y: 20, url: "https://b", urlTarget: "_blank" },
+    ],
+  },
+];
+```
+
 ### XML 데이터 — loadXml (IBChart XML 인터페이스)
 
 `chart.loadXml(xml)`은 XML 문자열을 `parseDataXml`로 해석해
 `setData`에 주입한다. 지원 형식 — `<category>` 목록과
-`<series>`(이름/색상 속성 + `<value>` 반복, `values`/`data`
+`<series>`(이름/색상 속성 + `<value>`/`<point>` 반복, `values`/`data`
 속성이나 `<data>` 쉼표 목록도 허용). 해석 실패 시 false를 반환하고
 데이터는 유지된다.
+
+포인트 요소에 속성이 있으면 `values` 대신 `points[]`로 해석한다 —
+`x`·`y`(또는 텍스트)·`z`·`color`·`name`·`url`·`urlTarget`
+(`target` 속성)·`etcData`가 `ChartPointInput` 필드로 매핑된다
+(IBChart 포인트별 속성 해당). 인식 못한 속성은 `etcData`로 간다.
 
 ```ts
 chart.loadXml(`<chartData>
   <categories><category>A</category><category>B</category></categories>
   <series name="XML"><value>9</value><value>18</value></series>
+  <series name="강조">
+    <point y="9" color="#f00" name="A" etcData="code-1"/>
+    <point y="18"/>
+  </series>
 </chartData>`);
 
 parseDataXml(xml); // { series, categories? } | null — 독립 사용 가능
+// 포인트 속성 시리즈 → { name, points: [{x:0, y:9, color, name, etcData}, …] }
 ```
 
-## 에러바 (series.errors)
+## 에러바
 
-`series[].errors: [[lo, hi], …]` — 포인트 값의 ±오차를 `.mc-error`
-캡 선분으로 그린다(line/bar/scatter 계열, 세로 차트만). 오차 끝이
-값 축 도메인에 포함되도록 도메인이 자동 확장된다. 선색은
-`--chart-error-color`.
+두 가지 경로가 있다:
+
+- **독립 타입 `type: "errorbar"`** — `series[].ranges`의 `[low, high]`
+  구간을 1급 지오메트리로 그린다(`.mc-type-errorbar` 아래 `.mc-eb`
+  path). `series[].values`가 있으면 중심값에 `.mc-eb-mean` 마커를
+  추가하고, `direction: "horizontal"`·툴팁·선택·키보드 포커스·
+  데이터 라벨("low–high")을 지원한다. IBChart의 errorbar 타입에 해당.
+- **오버레이 `series[].errors: [[lo, hi], …]`** — 다른 타입 위에
+  포인트 값의 ±오차를 `.mc-error` 캡 선분으로 얹는다(line/bar/scatter
+  계열, 세로 차트만). 오차 끝이 값 축 도메인에 포함되도록 도메인이
+  자동 확장된다. 선색은 `--chart-error-color`.
 
 ## 추세선 (series.trend)
 
@@ -375,6 +527,14 @@ SVG를 만든다 — `type: "line"|"area"|"bar"`, `values`, `color`,
 import { mountSparkline } from "@moda-chart/core";
 mountSparkline(el, { values: [3, 7, 5, 9], type: "area" });
 ```
+
+## 데이터 테이블 (table)
+
+`table: true | { caption, maxRows }` — 차트 아래에 현재 데이터의
+접근성 표(`.mc-table-wrap` > `table.mc-table`)를 렌더한다.
+카테고리 × 시리즈 행렬이며 `caption`은 `title`로 폴백한다
+(IBChart의 showDataTable류 접근성 표에 해당). CSV 출력(`toCSV`)과
+같은 데이터 계열을 공유한다.
 
 ## 텍스트 마이닝 (parseText)
 

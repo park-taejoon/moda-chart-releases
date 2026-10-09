@@ -3,50 +3,52 @@
 다른 차트 라이브러리에서 이 프로젝트로 옮기는 사용자를 위한 개념 매핑 표.
 새 기능을 추가할 때마다 이 표에도 행을 추가한다.
 
-| 기존 개념                       | 이 프로젝트                                                                                                                              | 비고                                |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| series 배열                     | `series: [{ name, values }]`                                                                                                             | categories와 인덱스 정렬            |
-| xAxis categories                | `categories: [...]`                                                                                                                      | string/number/Date                  |
-| chart.type                      | `type` / `chart.setType()`                                                                                                               | 시리즈별 `series[].type` 혼합 가능  |
-| legend.show / position          | `legend: { position }`                                                                                                                   | 클릭 토글 내장                      |
-| tooltip.formatter               | `tooltip: { mode, format }`                                                                                                              | mode: point/shared/none             |
-| dataZoom / brush                | `zoom` + `brush` 옵션                                                                                                                    | Shift+드래그가 brush                |
-| zoomType: "xy"                  | `zoom: { axes: "xy", select: true }`                                                                                                     | `setZoomWindow({x,y})` 축별 제어    |
-| on('click')                     | `events.seriesClick` / `chart.on("seriesClick")`                                                                                         | 이벤트 맵                           |
-| color palette                   | `palette` 옵션 / `--chart-palette-*`                                                                                                     | CSS 변수로도 교체 가능              |
-| theme / darkMode                | `theme` / `setTheme` / `--chart-*` 변수                                                                                                  | `[data-theme]` 선택자               |
-| renderToImage / export          | `chart.toSVGString()` / `.mc-export-svg` 버튼                                                                                            | PNG는 canvas 래스터화               |
-| resize / autoResize             | `responsive` (기본 on) — ResizeObserver                                                                                                  | `setSize`로 수동 제어               |
-| aria / label                    | `ariaLabel` + 키보드 내비 + `.mc-a11y` 라이브 영역                                                                                       |                                     |
-| label / dataLabels              | `dataLabels: true \| { format }`                                                                                                         | `.mc-data-label` 값 텍스트          |
-| markLine / 기준선               | `markLines: [{ value, label }]`                                                                                                          | 값 축 기준선                        |
-| markBand / plotBand / 경고지역  | `markBands: [{ from, to, label }]`                                                                                                       | 값 축 도메인 구간 `.mc-mark-band`   |
-| step / spline 시리즈            | `type: "step"` / `type: "spline"`                                                                                                        | `.mc-line.mc-step`/`.mc-spline`     |
-| 100% stacked                    | `type: "percent-stacked-bar"`                                                                                                            | 라벨이 % 표기                       |
-| waterfall                       | `type: "waterfall"`                                                                                                                      | `.mc-bar-up`/`-down` + 연결선       |
-| bubble                          | `type: "bubble"` + `points[].z`                                                                                                          | z가 반지름                          |
-| heatmap                         | `type: "heatmap"` (시리즈=행, 카테고리=열)                                                                                               | `heatmap: {from,to}` 색 스케일      |
-| funnel / pyramid                | `type: "funnel"` / `type: "pyramid"`                                                                                                     | 카테고리 범례 공유                  |
-| addPoint / addSeries 등 실시간  | `chart.addPoint/removePoint/addSeries/removeSeries`                                                                                      | `shift` 옵션으로 창 유지            |
-| drilldown                       | `drilldown: { 라벨: level }` + `chart.drillUp()`                                                                                         | `.mc-drillup` 버튼                  |
-| 패턴 채우기 (색각 보조)         | `patterns: true` / `chart.setPatterns()`                                                                                                 | `<pattern class="mc-pattern">`      |
-| wordcloud                       | `type: "wordcloud"` (카테고리=단어, 값=크기)                                                                                             | `.mc-word`, 축 없음                 |
-| annotations / 인라인 이미지     | `annotations: [{ x, y?, label?, image? }]`                                                                                               | `.mc-annotation`                    |
-| allowPointSelect / point select | `allowPointSelect: true` + `pointSelect`/`pointUnselect` 이벤트                                                                          | `.mc-selected`, `selectPoint` API   |
-| lang / locale                   | `locale: "ko" \| "en"` / `chart.setLocale()`                                                                                             | 툴바·빈 상태 내장 문구              |
-| beforePrint / afterPrint        | `events.beforePrint` / `afterPrint` (window print 연동)                                                                                  | `chart.print()`로 인쇄 호출         |
-| radar / radar-area              | `type: "radar"` / `"radar-area"` (values 기반, 카테고리=스포크)                                                                          | `.mc-radar` + `.mc-radar-grid`      |
-| range bar / range area          | `type: "range-bar"` / `"range-area"` + `series[].ranges`                                                                                 | `[low,high]` 구간 데이터            |
-| candlestick / OHLC              | `type: "candlestick"` + `series[].ohlc`                                                                                                  | `[open,high,low,close]`             |
-| navigator / dataZoom 미니맵     | `navigator: true \| { height }`                                                                                                          | `.mc-navigator` 창 드래그가 줌 제어 |
-| errorBar / 오차 막대            | `series[].errors: [[lo,hi],…]`                                                                                                           | `.mc-error` (세로 차트)             |
-| trendLine / 추세선              | `series[].trend: { type: "linear" \| "movingAverage" }`                                                                                  | `.mc-trendline` 점선                |
-| setCategories / 데이터 패치     | `chart.setCategories` / `updateSeries` / `updatePoint`                                                                                   | `pointUpdate` 이벤트                |
-| redraw / print                  | `chart.redraw()` / `chart.print()`                                                                                                       | redraw 이벤트 발행                  |
-| title.text / subtext            | `title` / `subtitle`                                                                                                                     | `.mc-title`/`.mc-subtitle`          |
-| showLoading                     | `setLoading(bool)` / `loading` 옵션                                                                                                      | `.mc-loading` 오버레이              |
-| empty 데이터 문구               | `emptyText`                                                                                                                              | `.mc-empty`                         |
-| on('legendselectchanged') 등    | `legendToggle`/`legendHover`/`focusChange`/`dataChange`/`typeChange`/`themeChange`/`loadingChange`/`resize`/`chartClick`/`pointDblClick` | 세분화된 이벤트 맵                  |
+| 기존 개념                       | 이 프로젝트                                                                                                                              | 비고                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| series 배열                     | `series: [{ name, values }]`                                                                                                             | categories와 인덱스 정렬                                                       |
+| xAxis categories                | `categories: [...]`                                                                                                                      | string/number/Date                                                             |
+| chart.type                      | `type` / `chart.setType()`                                                                                                               | 시리즈별 `series[].type` 혼합 가능                                             |
+| legend.show / position          | `legend: { position }`                                                                                                                   | 클릭 토글 내장                                                                 |
+| tooltip.formatter               | `tooltip: { mode, format }`                                                                                                              | mode: point/shared/none                                                        |
+| dataZoom / brush                | `zoom` + `brush` 옵션                                                                                                                    | Shift+드래그가 brush                                                           |
+| zoomType: "xy"                  | `zoom: { axes: "xy", select: true }`                                                                                                     | `setZoomWindow({x,y})` 축별 제어                                               |
+| on('click')                     | `events.seriesClick` / `chart.on("seriesClick")`                                                                                         | 이벤트 맵                                                                      |
+| color palette                   | `palette` 옵션 / `--chart-palette-*`                                                                                                     | CSS 변수로도 교체 가능                                                         |
+| theme / darkMode                | `theme` / `setTheme` / `--chart-*` 변수                                                                                                  | `[data-theme]`/`[data-mode]` 선택자, 객체 테마 `{name,base,palette,vars}` 지원 |
+| renderToImage / export          | `chart.toSVGString()` / `.mc-export-svg` 버튼                                                                                            | PNG는 canvas 래스터화                                                          |
+| resize / autoResize             | `responsive` (기본 on) — ResizeObserver                                                                                                  | `setSize`로 수동 제어                                                          |
+| aria / label                    | `ariaLabel` + 키보드 내비 + `.mc-a11y` 라이브 영역                                                                                       |                                                                                |
+| canvas 렌더러 (AG Charts 기본)  | `renderer: createCanvasRenderer()` — `ChartRenderer` 주입 (`mountChart` 옵션 / `ChartView` prop)                                        | 기본은 SVG 렌더러                                                              |
+| label / dataLabels              | `dataLabels: true \| { format }`                                                                                                         | `.mc-data-label` 값 텍스트                                                     |
+| markLine / 기준선               | `markLines: [{ value, label }]`                                                                                                          | 값 축 기준선                                                                   |
+| markBand / plotBand / 경고지역  | `markBands: [{ from, to, label }]`                                                                                                       | 값 축 도메인 구간 `.mc-mark-band`                                              |
+| step / spline 시리즈            | `type: "step"` / `type: "spline"`                                                                                                        | `.mc-line.mc-step`/`.mc-spline`                                                |
+| 100% stacked                    | `type: "percent-stacked-bar"`                                                                                                            | 라벨이 % 표기                                                                  |
+| waterfall                       | `type: "waterfall"`                                                                                                                      | `.mc-bar-up`/`-down` + 연결선                                                  |
+| bubble                          | `type: "bubble"` + `points[].z`                                                                                                          | z가 반지름                                                                     |
+| heatmap                         | `type: "heatmap"` (시리즈=행, 카테고리=열)                                                                                               | `heatmap: {from,to}` 색 스케일 + `.mc-scale` 연속값 범례                       |
+| funnel / pyramid                | `type: "funnel"` / `type: "pyramid"`                                                                                                     | 카테고리 범례 공유                                                             |
+| addPoint / addSeries 등 실시간  | `chart.addPoint/removePoint/addSeries/removeSeries`                                                                                      | `shift` 옵션으로 창 유지                                                       |
+| drilldown                       | `drilldown: { 라벨: level }` + `chart.drillUp()`                                                                                         | `.mc-drillup` 버튼                                                             |
+| 패턴 채우기 (색각 보조)         | `patterns: true` / `chart.setPatterns()`                                                                                                 | `<pattern class="mc-pattern">`                                                 |
+| wordcloud                       | `type: "wordcloud"` (카테고리=단어, 값=크기)                                                                                             | `.mc-word`, 축 없음                                                            |
+| annotations / 인라인 이미지     | `annotations: [{ x, y?, label?, image? }]`                                                                                               | `.mc-annotation`                                                               |
+| allowPointSelect / point select | `allowPointSelect: true` + `pointSelect`/`pointUnselect` 이벤트                                                                          | `.mc-selected`, `selectPoint` API                                              |
+| lang / locale                   | `locale: "ko" \| "en"` / `chart.setLocale()`                                                                                             | 툴바·빈 상태 내장 문구                                                         |
+| beforePrint / afterPrint        | `events.beforePrint` / `afterPrint` (window print 연동)                                                                                  | `chart.print()`로 인쇄 호출                                                    |
+| radar / radar-area              | `type: "radar"` / `"radar-area"` (values 기반, 카테고리=스포크)                                                                          | `.mc-radar` + `.mc-radar-grid`                                                 |
+| range bar / range area          | `type: "range-bar"` / `"range-area"` + `series[].ranges`                                                                                 | `[low,high]` 구간 데이터                                                       |
+| candlestick / OHLC              | `type: "candlestick"` + `series[].ohlc`                                                                                                  | `[open,high,low,close]`                                                        |
+| navigator / dataZoom 미니맵     | `navigator: true \| { height }`                                                                                                          | `.mc-navigator` 창 드래그가 줌 제어                                            |
+| errorBar / 오차 막대            | `type: "errorbar"` + `series[].ranges`(위스커)·`values`(중심 마커), 또는 `series[].errors` 오버레이                                      | `.mc-eb`/`.mc-eb-mean` (타입) · `.mc-error` (오버레이)                         |
+| trendLine / 추세선              | `series[].trend: { type: "linear" \| "movingAverage" }`                                                                                  | `.mc-trendline` 점선                                                           |
+| setCategories / 데이터 패치     | `chart.setCategories` / `updateSeries` / `updatePoint`                                                                                   | `pointUpdate` 이벤트                                                           |
+| redraw / print                  | `chart.redraw()` / `chart.print()`                                                                                                       | redraw 이벤트 발행                                                             |
+| title.text / subtext            | `title` / `subtitle`                                                                                                                     | `.mc-title`/`.mc-subtitle`                                                     |
+| showLoading                     | `setLoading(bool)` / `loading` 옵션                                                                                                      | `.mc-loading` 오버레이                                                         |
+| empty 데이터 문구               | `emptyText`                                                                                                                              | `.mc-empty`                                                                    |
+| on('legendselectchanged') 등    | `legendToggle`/`legendHover`/`focusChange`/`dataChange`/`typeChange`/`themeChange`/`loadingChange`/`resize`/`chartClick`/`pointDblClick` | 세분화된 이벤트 맵                                                             |
+| on('seriesAfterAnimate')        | `seriesAfterAnimate` `{ updating }`                                                                                                      | 진입/갱신 트랜지션 종료마다 발행 (`animation:false`면 미발행)                  |
 
 | map / choropleth 지도 | `type: "map"` + `series[].mapData` + `map: { topology: WORLD_TOPOLOGY }` | TopoJSON/GeoJSON, `.mc-map-region` |
 | sunburst / treemap | `type` + `series[].tree` (재귀 `ChartTreeNode`) | value 생략 시 children 합계 |
@@ -61,10 +63,23 @@
 | histogram | `type: "histogram"` + `histogram: {bins\|binWidth}` | 원시 values를 빈 카운트로 |
 | cone-funnel | `type: "cone-funnel"` | 값 비례 단계 높이 + 수렴 외곽 |
 | organization | `type: "organization"` + `series[].tree` | top-down 트리 `.mc-org-node/link` |
+| 조직도 확장 | `organization.orientation`/`nodeWidth`/`nodeHeight`, `tree[].subtitle`/`color`/`collapsed` | 수평 배치·카드 크기·부제/색·초기 접힘 |
+| 조직도 접기 API | `toggleOrgNode(i)` / `setOrgNodeCollapsed(i,f)` / `isOrgNodeCollapsed(i)` / `expandOrgAll()` | `orgToggle` 이벤트 `{index,collapsed,name}`, 상태 왕복 포함 |
+| 조직도 카드/탐색 | `tree[].image`, `organization.panZoom`/`renderNode(n)` | 사진 카드·휠 줌/드래그 팬·노드 커스텀 마크업 |
+| 조직도 편집 | `organization.editable`(노드 DnD 리페어런팅), `addOrgNode(p,n)` / `removeOrgNode(i)` / `moveOrgNode(i,p)` | `orgMove` 이벤트 `{index,name,from,to}`, p=-1은 루트 |
+| 조직도 검색 | `organization.searchable`(`.mc-org-search` 입력), `searchOrg(q)` / `searchOrgNext()` / `clearOrgSearch()` | 매치 노드 `.mc-org-match` 강조, `orgSearch` 이벤트 `{query,count}` |
+| 조직도 노드 메뉴 | `organization.nodeMenu`(true 또는 `{items}`) | 노드 우클릭 메뉴 — 내장 접기/삭제 + 커스텀 항목은 `menuAction`에 `index` 동반 |
+| 조직도 미니맵 | `organization.minimap` | `.mc-org-minimap` 인셋 — 전체 트리 축소 + `.mc-org-mm-view` 뷰포트, 클릭/드래그 팬(`orgMinimapPan`) |
+| 조직도 보조자/꺾은선 | `tree[].assistant`, `organization.layout:"elbow"` | 보조자는 트렁크 옆 카드(`.mc-org-assist`), elbow는 왼쪽 꺾은선 행 나열 |
+| 조직도 컴팩트 배치 | `organization.layout:"compact"` | 서브트리 컨투어 최소 간격 패킹 + 중앙 정렬 |
+| 조직도 플랫 입력 | `series[].treeList`(`{id,parentId}`) / `listToTree()` | DB형 조직 데이터를 중첩 트리 없이 공급 |
+| 조직도 줌 LOD | (자동 — 축소 시 `OrgNodeView.compact`) | 카드가 간략 블록으로 전환, 스냅샷/히트는 유지 |
+| 크로스헤어 밴드 | `tooltip: "shared"` (band 축) | 활성 카테고리 배경 `.mc-crosshair-band` — `snap.crosshair`가 `{ pos, horizontal, band }` 뷰로 확장 |
 | linear gauge | `type: "linear-gauge"` + `gauge` 옵션 | 수평 트랙 `.mc-lg-*` |
-| map markers / lines | `series[].mapPoints` / `mapLines` | 경도·위도 레이어 — `.mc-map-marker/-line` |
+| map markers / lines | `series[].mapPoints` / `mapLines` | 경도·위도 레이어 — `.mc-map-marker/-line`, `url`로 클릭 링크 |
 | 사용자 지도 핀 | `mapPoints[].image`/`pulse` + `map.cluster`/`panZoom` | 아바타 핀·펄스·클러스터 버블·지도 팬줌 |
 | itemStyler / pointColor / pointName | `series[].itemStyle(ctx)` / `points[].color`·`name` | 포인트별 색·이름 오버라이드 |
+| marker.shape / size / enabled | `series[].marker` / `points[].shape`·`size` | 포인트 심볼 — circle 외는 `.mc-point.mc-<shape>` `<path>` |
 | tooltip HTML 렌더러 | `tooltip: { render: (ctx) => html }` | `.mc-tooltip` innerHTML (신뢰된 마크업만) |
 | context menu | `contextMenu: true \| { items }` | 플롯 우클릭 `.mc-menu`, `menuAction` 이벤트 |
 | 차트 동기화 | `sync: "그룹키"` | 같은 키 차트 간 호버·줌 전파 |
@@ -85,7 +100,16 @@
 | 채널/피보나치/측정 도구 (AG annotations) | `setDrawMode("channel"\|"fibonacci"\|"measure")` | `.mc-draw-band`/`.mc-draw-fib-level` 등 |
 | AG `updateDelta` | `chart.updateDelta(partialOptions)` | 키별 재귀 병합 — notify/dataChange 1회 |
 | IBChart `etcData` | `series[].etcData` / `points[].etcData` | `pointSelect`·툴팁 컨텍스트·`getEtcData()` |
-| 갱신 애니메이션 | `animation: { updates: true }`(기본) | 데이터 변경 후 `.mc-updating` + `.mc-morph` 보간 |
+| 갱신 애니메이션 | `animation: { updates: true }`(기본) | 데이터 변경 후 `.mc-updating` + 전 지오메트리 `.mc-morph` 보간 + 신규 `.mc-enter` 진입 + 삭제 `.mc-exit` 퇴장 |
 | IBChart XML 데이터 | `chart.loadXml(xml)` / `parseDataXml(xml)` | `<series>`+`<value>` 스키마 → setData |
+| IBChart `url` 포인트 | `points[].url` / `urlTarget` (XML `url`/`target` 속성) | 클릭 네비게이션, `.mc-link` 마킹 |
+| 범례 집계값 | `legend: { value: "sum"\|"avg"\|"latest"\|fn }` | `.mc-legend-value` 항목 옆 집계 표시 |
+| 범례 전체 토글 | `legend: { toggleAll: true }` | `.mc-legend-all` 버튼, `legendAllToggle` 이벤트 |
+| 툴팁 고정 | `tooltip: { pin: true }` | 클릭으로 `.mc-tooltip.mc-pinned`, `chart.unpinTooltip()` |
+| 줌 프리셋 | `zoom: { presets: [{label, count\|window}] }` | `.mc-preset-btn` 범위 버튼, `chart.applyZoomPreset(i)` |
+| 축 숫자 축약 | `xAxis`/`yAxis: { compact: true }` | `1.2K`/`3.4M` 표기, `format` 우선 |
+| 데이터 테이블 | `table: true \| { caption, maxRows }` | 차트 아래 `.mc-table` 접근성 표 |
+| CSV보내기 | `chart.toCSV()` / `downloadCSV(chart)` | `exporting: { filename }`로 파일명 |
+| 전체화면 | 툴바 `.mc-fullscreen` / `chart.toggleFullscreen()` | `fullscreenChange` 이벤트, `.mc-fullscreen-on` 폴백 |
 
 <!-- 새 기능 행을 여기에 추가 -->
