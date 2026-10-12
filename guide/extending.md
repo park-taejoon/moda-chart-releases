@@ -38,6 +38,7 @@ DOM으로 검증 가능하면 `conformance.ts`에 it 블록을 추가한다 —
 
 - `docs/guide/features/<feature>.md` — 기능 가이드
 - 플랫폼별 prop/슬롯이 다르면 `platforms/*.md` 갱신
+- `api-reference.md` — 공개 메서드/이벤트/헬퍼면 표에 추가
 - `migration.md` — 유사 라이브러리에서 온 사용자를 위한 매핑 표에 추가
 
 ## 8. 검증

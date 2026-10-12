@@ -213,6 +213,42 @@ SVG 렌더러와의 차이:
 - **내보내기** — `toMarkup` 미구현. SVG/PNG/CSV 보내기는 코어의
   `toSVGString` 경로라 렌더러와 무관하게 그대로 동작한다.
 
+## 3-2. 내장 WebGL 렌더러 — `createWebglRenderer`
+
+`createWebglRenderer()`는 `ChartRenderer` 계약의 WebGL 구현이다.
+대량 포인트·막대 지오메트리를 GPU 프리미티브로 그려 수만~수십만
+포인트 차트에서 Canvas2D보다 유리한 경로다.
+
+```ts
+import { createWebglRenderer } from "@moda-chart/core";
+
+mountChart(el, { ...options, renderer: createWebglRenderer() });
+// 데모 앱은 ?renderer=webgl 로 전환한다
+```
+
+레이어 구조 — 두 장의 캔버스가 겹친다:
+
+- **`canvas.mc-canvas`(WebGL)** — 마크밴드·그리드 + 직교 지오메트리
+  (line/step/spline 폴리라인→삼각형, scatter/bubble 원형 포인트,
+  bar/range-bar/heatmap 사각형). 좌표 변환 계약(`svgPosOf`)은 이
+  캔버스가 갖는다.
+- **`canvas.mc-canvas-2d`(Canvas2D 오버레이)** — 축·틱 라벨·주석·
+  크로스헤어 같은 텍스트 크롬과 GL 미지원 지오메트리(area/range-area
+  채움, candlestick/ohlc/boxplot/errorbar, 슬라이스·계층·플로우·맵
+  패밀리)를 기존 `drawGeometry`로 그린다. `pointer-events:none`이라
+  인터랙션은 아래 계층에 그대로 통과한다.
+
+제약·폴백:
+
+- **GL 컨텍스트 부재** — 오버레이 캔버스가 전체 스냅샷을 그리는
+  Canvas2D 폴백으로 자동 전환된다 (시각·DOM 계약은 캔버스 렌더러와
+  동일).
+- **선 굵기** — 두꺼운 선은 수선 확장 사각형이라 라운드 조인/캡이
+  없다.
+- **레이어 순서** — 오버레이가 상층이라 축 라벨·주석이 지오메트리
+  위에 놓인다.
+- **내보내기** — `toMarkup` 미구현, 캔버스 렌더러와 같은 코어 경로.
+
 렌더러는 인스턴스를 재사용해야 한다(아바타/주석 이미지 캐시 보유) —
 React처럼 렌더가 반복되는 환경에서는 `useMemo` 등으로 고정한다.
 
@@ -240,12 +276,12 @@ function bindWheel(chart: ChartZoomApi) {
 | `ChartDrilldownApi`   | drillDown/drillUp/drillUpAll                    |
 | `ChartDrawingApi`     | 그리기 도구·주석                                |
 | `ChartMapApi`         | mapZoomAt                                       |
+| `ChartOrgApi`         | 조직도 — 접기/편집/DnD/검색/미니맵              |
 | `ChartSearchApi`      | search.load                                     |
 | `ChartExportApi`      | print·emitPrint·toSVGString                     |
 
-**현재 한계** — 슬라이스는 타입 분해다. `ChartCore`는 항상 전체
-`Chart`를 구현하며, 특정 능력을 런타임에 비활성화해 메서드를
-제거/무효화하는 기능은 없다 (API 의미가 바뀌므로 별도 설계 대상).
+메서드·이벤트의 전체 목록은 [api-reference.md](./api-reference.md)를
+본다. `options.disabled`로 능력별 동작을 끄는 경로는 §4-2 참조.
 
 ## 4-1. lite 진입점 — 빌더·이미터 선택 번들
 
@@ -266,6 +302,32 @@ mountChartLite(el, {
   emitters: [cartesianEmitter], // 지오메트리 → SVG 마크업 체인
 });
 ```
+
+빌더/이미터 짝을 직접 맞추기 번거로우면 **패밀리 모듈**로 대신할 수
+있다 — `modules`에 필요한 패밀리만 골라 넣으면 두 체인이 자동으로
+펼쳐진다:
+
+```ts
+import {
+  mountChartLite,
+  cartesianModule,
+  sliceModule,
+} from "@moda-chart/core/lite";
+
+mountChartLite(el, {
+  series,
+  categories,
+  modules: [cartesianModule, sliceModule], // line~bar + pie~pyramid
+});
+```
+
+모듈 목록: `cartesianModule` `sliceModule` `polarModule` `gaugeModule`
+`radarModule` `hierarchyModule` `organizationModule` `flowModule`
+`mapModule` `heatmapModule` `wordcloudModule` `pictogramModule`.
+
+반환 핸들은 `mountChart`와 같다 — `{ chart, rootEl, update, destroy }`.
+`update(next)`로 마운트 옵션과 diff 동기화도 같은 계약이다.
+`modules`와 `builders`/`emitters`는 섞어 쓸 수 있고 중복은 제거된다.
 
 - 동작은 같다 — `Chart` 인터페이스·`mc-*` DOM 계약·컨포먼스를 공유한다.
 - `builders`·`emitters`는 **체인 대체**다 — 빌더 체인에 없는 타입은

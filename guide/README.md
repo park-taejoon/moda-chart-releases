@@ -1,6 +1,7 @@
 # 가이드
 
 - [시작하기 — 템플릿에서 새 프로젝트 만들기](./getting-started.md)
+- [API 레퍼런스 — Chart 메서드·이벤트·헬퍼](./api-reference.md)
 - [아키텍처 — 코어/어댑터/스냅샷 계약](./architecture.md)
 - [기능 추가 워크플로](./extending.md)
 - [플러그인 · 대체 렌더러 가이드](./plugins.md)

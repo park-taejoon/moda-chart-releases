@@ -1,13 +1,19 @@
 # 코어 모듈화 · 인터페이스화 설계
 
-> 상태: Phase 1~8 완료 — `src/build/` 순수 빌더 + 레지스트리,
-> `hit-test.ts`, `controllers/` 6개 슬라이스 추출, `interface Chart`
-> 명문화, `features/core-host.ts` 피처 계약, `renderer.ts`의
-> `ChartRenderer` 경계, `Chart`의 능력 슬라이스 분해(`Chart*Api` 12개),
+> 상태: Phase 1~15 완료 — `src/build/` 순수 빌더 + 레지스트리,
+> `hit-test.ts`, `controllers/` 7개 슬라이스 추출
+> (data/viewport/interaction/map-state/drawing/sync/organization),
+> `interface Chart` 명문화, `features/core-host.ts` 피처 계약,
+> `renderer.ts`의 `ChartRenderer` 경계, `Chart`의 능력 슬라이스
+> 분해(`Chart*Api` 13개),
 > `core-impl.ts` 분리 + `lite.ts` 서브패스(빌더·이미터 선택 번들),
 > `render/` 이미터 분해 + `svg-impl.ts` 합성부,
+> `canvas/` Canvas2D 이미터 체인,
 > `snapshot/` 부속 뷰 빌더 분해 + `layout.ts` 플롯 프레임 +
-> `a11y.ts` 접근성 텍스트 (core-impl 6325→2151줄),
+> `a11y.ts` 접근성 텍스트,
+> `domain.ts` 도메인 순수 계산 + `locale.ts` 로케일 맵 +
+> `controllers/sync.ts` 동기화 적용 로직 이관 (core-impl 6325→2376줄
+> — 조직도 기능 확장 분 포함),
 > `types.ts` → `types/`(input/views/events/api) 분할.
 > 목적: 유지보수성 + 플러그인/트리셰이킹 + 대체 렌더러 대비
 
@@ -176,7 +182,8 @@ packages/core/src/
    - `buildSnapshot`은 오케스트레이터로 축소 — 플롯/스케일 계산 후
      SnapCtx 하나로 섹션 빌더들을 순서대로 호출
    - a11y(`describePoint`)는 map-state 노드메타가 필요해 코어 잔류
-   - core-impl.ts 6325 → 2249줄 (처음 대비 64% 축소)
+   - core-impl.ts 6325 → 2249줄 (처음 대비 64% 축소 — 당시 수치,
+     이후 기능 확장 + Phase 30~32로 현재 2376줄)
    - `snapshot.test.ts` 신규 22개 — 메뉴/스크롤바/선택 뷰/다중축
      마크/주석 변형/툴팁 shared·point·none/범례 페이지 클램프/
      선택 마킹/에러바 방향/참조 무효화
@@ -193,7 +200,7 @@ packages/core/src/
      `import from "./types.js"` 경로 무파괴
    - `numericTicks`/`groupTicks`를 snapshot/axes.ts 내부 함수로
      이동 — SnapCtx 콜백 2개 제거, `catGroup`만 추가
-   - core-impl.ts 2249 → 2106줄 (최초 대비 67% 축소)
+   - core-impl.ts 2249 → 2106줄 (최초 대비 67% 축소 — 당시 수치)
    - `lite-guard.test.ts` 신규 — lite/view 진입점의 정적 import
      그래프가 build/defaults·render/defaults·svg·core·mount에
      도달하면 실패. 트리셰이킹 회귀를 CI가 잡는다
@@ -226,11 +233,14 @@ packages/core/src/
   해결: `hitTest`가 15개 타입별 `hit*()` 해석기를 우선순위 배열로
   호출하는 디스패처가 됐다. 삼 상태 반환(`undefined`=내 타입 아님,
   `null`=내 타입이지만 미스)으로 기존 조기 반환 시맨틱을 정확히 보존
-- ~~`buildSnapshot` 잔여 헬퍼 이동~~ — 검토 결과 **이동 불가 판정**:
-  `selectionIndices`/`xSpanRaw`/`catLeaf`/`catGroup`/`xSpan`/`ySpan`
-  전부 공개 API 경로(라벨·줌 팬 수학)와 스냅샷 콜백 양쪽에서 쓰인다.
-  옮기면 같은 결합이 다른 모듈로 이사할 뿐 — core-impl 잔류가
-  올바른 경계다
+- ~~`buildSnapshot` 잔여 헬퍼 이동~~ — **Phase 31에서 해소**:
+  당초 "이동 불가"로 판정했으나(`selectionIndices`/`catLeaf` 등이
+  공개 API와 스냅샷 콜백 양쪽에서 사용), 순수 계산부만 `domain.ts`로
+  추출하고 캐시·상태 접근은 코어의 에포크 캐시 래퍼로 유지하는
+  방식으로 분리했다. `xSpanRaw`는 콜백으로 주입해 결합을 끊었다.
+  `locale.ts`(로케일 맵)·`controllers/sync.ts`(동기화 적용 로직)도
+  같은 Phase에 이관. Phase 32에서 SnapCtx 콜백 11개는 인스턴스당
+  1회 생성되는 `snapHooks` 필드로 호이스트했다
 
 ## Phase 10 — 런타임 능력 비활성화 ✅
 
@@ -333,8 +343,9 @@ builders/emitters 선택을 쓴다 — disabled는 동작만 끈다.
   (`options.organization`), `OrgNodeView.path`/`subtitle`/`hasChildren`/
   `collapsed`/`toggle`, `ChartOrgApi.toggleOrgNode(index)`,
   `orgToggle` 이벤트 `{index, collapsed}`
-- 상태 — `inter.orgCollapsed`는 TreeDatum.path 집합으로 관리해
-  DFS index가 레이아웃 재계산에 흔들려도 접기 상태가 유지된다
+- 상태 — `org.collapsed`(OrganizationController)는 TreeDatum.path
+  집합으로 관리해 DFS index가 레이아웃 재계산에 흔들려도 접기 상태가
+  유지된다
 - 인터랙션 — `view-bindings`가 `.mc-org-toggle` 클릭을 포인트
   클릭과 분리해 `toggleOrgNode`로 라우팅한다
 
@@ -355,14 +366,18 @@ Phase 11의 카드/접기 기반 위에 인터페이스·상태·a11y 갭을 메
   유효 접힘 해석(`effectiveOrgCollapsed`)을 캡슐화:
   `유효 = (입력 collapsed:true 시드 ∪ 사용자 접힘) − 사용자 펼침`
 - `ChartTreeNode.collapsed` — 초기 접힘 시드. 사용자가 시드 노드를
-  펼치면 `inter.orgExpanded`가 시드를 덮어써 토글이 되돌아가지 않는다
+  펼치면 `org.expanded`(OrganizationController)가 시드를 덮어써
+  토글이 되돌아가지 않는다
 - `ChartOrgApi` 확장 — `setOrgNodeCollapsed`(명시 설정, 같은 상태는
   no-op), `expandOrgAll`(사용자 접힘 + 시드까지 전부 펼침 —
   시드 path는 빌더 side `orgSeeds`로 전달), `isOrgNodeCollapsed`
 - `orgToggle` 페이로드에 `name` 추가
 - `ChartState.orgCollapsed`/`orgExpanded` — getState/setState 왕복
-- `resetInteraction`이 org 접힘 두 세트를 비움 — hiddenSlices와 같은
-  뷰 상태로 통일 (드릴/데이터 변경 시 stale path 방지)
+- `OrganizationController.reset()`이 org 접힘 두 세트를 비움 —
+  hiddenSlices와 같은 뷰 상태로 통일 (드릴/데이터 변경 시 stale path
+  방지). 조직도 상태·편집·DnD·검색·미니맵 팬은 Phase 28에서
+  `controllers/organization.ts`로 추출됐고 `ChartOrgApi`는
+  core-impl의 1줄 위임이다
 - a11y — `.mc-org-toggle`에 `role="button"`/`aria-expanded`/`aria-label`,
   카드 내부 텍스트에 `aria-hidden`, 노드 aria-label에 부제 포함
 - 히트 라벨 — `name (subtitle)` 형태로 툴팁 제목에 부제 병기
@@ -470,3 +485,30 @@ selected}` — 수직은 c=x·lo/hi=y, 수평은 c=y·lo/hi=x
 - 피처 간 순환 의존 — `CoreHost` 콜백 주입 + import 방향 규칙
 - `sideEffects: false` 전환 — styles.css, `SYNC_GROUPS` 등록부 등
   "import만 하면 동작"하는 코드 경로 점검
+
+## Phase 41 — 렌더러 경계 확장 + 파사드 리졸버 추출
+
+### core-impl 추가 분할 판정
+
+`buildSnapshot()`은 ~30개 인스턴스 필드를 읽는 조립부라 — wholesale
+추출은 모든 상태를 다시 담는 god context를 만들 뿐이라 유지한다.
+대신 옵션만 읽는 순수 리졸버(type/direction/zoom/tooltip/legend/
+palette/yAxes/capability)를 `options-resolve.ts`로, CSV 셀 직렬화를
+`snapshot/table.ts`로 분리했다 — 인터페이스 경계가 좁아 실익이 있다.
+(2447 → 2327줄)
+
+### WebGL 렌더러 — 계층형 ChartRenderer
+
+`createWebglRenderer`는 새 차트 모델이 아니라 같은 `ChartRenderer`
+계약의 세 번째 구현이다. 스냅샷이 불변 렌더 모델이라 GL 레이어가
+지오메트리만 소비하고, 미지원 패밀리·텍스트 크롬은 기존 Canvas2D
+합성(`drawSnapshot` + skip 세트)이 2D 오버레이에 그린다 —
+이중 그리기 차단은 `drawSnapshot(d, images, {skip, skipBackdrop})`
+옵션으로 계약화했다. GL 컨텍스트 부재는 폴백으로 수렴해
+`.mc-*` DOM 계약이 렌더러 선택과 무관하게 유지된다.
+
+### 테스트 파일 도메인 분할
+
+core-charts.test.ts(2208줄)·core.test.ts(1840줄)를 도메인별
+스펙(map/hierarchy/flow/polar/geometry/org + interaction/types/data)
+으로 분리 — 26파일 550건, 케이스 수·동작 불변.

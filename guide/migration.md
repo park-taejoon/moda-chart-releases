@@ -18,7 +18,7 @@
 | renderToImage / export          | `chart.toSVGString()` / `.mc-export-svg` 버튼                                                                                            | PNG는 canvas 래스터화                                                          |
 | resize / autoResize             | `responsive` (기본 on) — ResizeObserver                                                                                                  | `setSize`로 수동 제어                                                          |
 | aria / label                    | `ariaLabel` + 키보드 내비 + `.mc-a11y` 라이브 영역                                                                                       |                                                                                |
-| canvas 렌더러 (AG Charts 기본)  | `renderer: createCanvasRenderer()` — `ChartRenderer` 주입 (`mountChart` 옵션 / `ChartView` prop)                                        | 기본은 SVG 렌더러                                                              |
+| canvas 렌더러 (AG Charts 기본)  | `renderer: createCanvasRenderer()` — `ChartRenderer` 주입 (`mountChart` 옵션 / `ChartView` prop)                                         | 기본은 SVG 렌더러                                                              |
 | label / dataLabels              | `dataLabels: true \| { format }`                                                                                                         | `.mc-data-label` 값 텍스트                                                     |
 | markLine / 기준선               | `markLines: [{ value, label }]`                                                                                                          | 값 축 기준선                                                                   |
 | markBand / plotBand / 경고지역  | `markBands: [{ from, to, label }]`                                                                                                       | 값 축 도메인 구간 `.mc-mark-band`                                              |
@@ -111,5 +111,16 @@
 | 데이터 테이블 | `table: true \| { caption, maxRows }` | 차트 아래 `.mc-table` 접근성 표 |
 | CSV보내기 | `chart.toCSV()` / `downloadCSV(chart)` | `exporting: { filename }`로 파일명 |
 | 전체화면 | 툴바 `.mc-fullscreen` / `chart.toggleFullscreen()` | `fullscreenChange` 이벤트, `.mc-fullscreen-on` 폴백 |
+| 대용량 샘플링 (ECharts `sampling` 해당) | `decimation: true \| { threshold, types, method }` | `method:"lttb"`(선 계열)/`"grid"`(산포 밀도) — `.mc-point`/path 축소, 도메인·히트는 원본 |
+| 내장 지도 데이터 | `import { WORLD_TOPOLOGY } from "@moda-chart/core/maps/world"` | 192K 지형 데이터의 서브패스 진입 (기존 `.` export 유지) |
+| Highcharts `data: [[x,y],…]` | `series[].points: [[x,y],…]` | 튜플 포인트 — `{x,y}` 객체와 혼용, `addPoint`도 튜플 수용 |
+| 옵션 부분 갱신 | `chart.setOptions(patch)` | `updateDelta`의 별칭 |
+| 시리즈 id 조회 | `chart.getSeries()` | 해석된 id·index·name·type·visible — `removeSeries` 등의 식별자 |
+| 현재 옵션 조회 | `chart.getOptions()` | 읽기 전용 |
+| 옵션 전체 동기화 (React props 패턴) | `mounted.update(next)` / 어댑터의 `options` prop | `diffOptions` 깊이 비교 — 달라진 키만 병합, 사라진 키는 해제 |
+| 선언적 차트 컴포넌트 | `<Chart options={...}>` (React/Vue/Vue2/Svelte) | 코어 생성·prop 동기화·dispose 내장 — ref/expose/bind로 인스턴스 접근 |
+| dev 경고 (옵션 오입력) | `devWarnings` 옵션 (기본 true) | 알 수 없는 type·형태 오류를 console.warn으로 알림 — 커스텀 타입 경로는 자동 면제 |
+| WebGL 렌더러 | `renderer: createWebglRenderer()` | GL 지오메트리 + 2D 오버레이 하이브리드 — GL 부재 시 Canvas2D 폴백 |
+| dev 경고 (대용량 미축소) | `devWarnings` 옵션 | decimation 없이 2,000포인트 초과 시리즈를 1회 경고 |
 
 <!-- 새 기능 행을 여기에 추가 -->

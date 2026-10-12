@@ -68,3 +68,15 @@ docker compose -f docker-compose.dev.yml up --build # watch — 소스 마운트
   <link rel="stylesheet" href="https://chart.modaolive.com/style.css" />
   <script src="https://chart.modaolive.com/moda-chart.js"></script>
   ```
+
+- **로컬 재현** — `.env`/`.env.local`에 같은 토큰을 세팅하면
+  `pnpm deploy:local`로 위 워크플로를 로컬에서 실행한다
+  (`scripts/deploy.mjs`):
+
+  ```bash
+  pnpm deploy:local npm    # npm 게시만
+  pnpm deploy:local cdn    # Cloudflare Pages만
+  pnpm deploy:local docs   # 문서 레포 동기화만
+  pnpm deploy:local all    # 전부
+  # --dry-run: 명령 출력만 / --skip-verify: 빌드·테스트 생략
+  ```

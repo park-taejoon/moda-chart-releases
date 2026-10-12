@@ -132,25 +132,25 @@
 
 기호: ✅ 지원 / △ 다른 방식으로 부분 대응 / ❌ 없음
 
-| IB Org# 기능                          | moda-chart 상태                                             |
-| ------------------------------------- | ----------------------------------------------------------- |
-| 사진/부제 노드                        | ✅ `tree[].image`/`subtitle`, `.mc-org-photo`               |
-| 다양한 카드 디자인                    | ✅ `organization.renderNode` 커스텀 마크업                  |
-| 노드 접기/펼치기                      | ✅ `collapsed` 시드 + `.mc-org-toggle` + `expandOrgAll`     |
-| 세로/가로 배치                        | ✅ `organization.orientation` (vertical/horizontal)         |
-| 확대/축소·팬                          | ✅ `organization.panZoom` (휠 줌·드래그 팬·더블클릭 리셋)  |
-| 노드 Drag & Drop 이동(상위조직 변경)  | ✅ `organization.editable` — 노드 드래그로 리페어런팅       |
-| 조직 생성/삭제                        | ✅ `addOrgNode`/`removeOrgNode`/`moveOrgNode` + `orgMove`   |
-| 조직 검색                             | ✅ `organization.searchable` — `.mc-org-search` + `searchOrg` |
-| 노드 팝업메뉴                         | ✅ `organization.nodeMenu` — 노드 우클릭 메뉴(menuAction에 index) |
-| 미니맵                                | ✅ `organization.minimap` — `.mc-org-minimap` 인셋+뷰포트 팬 |
-| 테이블/세로형 노드                    | △ `renderNode`로 가능 — 내장 프리셋 없음                    |
-| 보조자(assistant) 노드                | ✅ `tree[].assistant` — 부모 트렁크 옆 카드(`.mc-org-assist`) |
-| 왼쪽꺾은선 배치                       | ✅ `organization.layout:"elbow"` — DFS 행 나열 덴드로그램  |
-| 격자보기/자석 스냅                    | ❌ 자유배치 편집 전제 — 계획 없음                           |
-| XML 저장/불러오기                     | △ 범용 `toXmlString`/`loadXml` (차트 옵션 단위)             |
-| 이미지 저장                           | ✅ 범용 SVG/PNG보내기                                    |
-| 파일 비교·DB 동기화                   | ❌ 애플리케이션 책임 — 차트 라이브러리 범위 밖              |
+| IB Org# 기능                         | moda-chart 상태                                                   |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| 사진/부제 노드                       | ✅ `tree[].image`/`subtitle`, `.mc-org-photo`                     |
+| 다양한 카드 디자인                   | ✅ `organization.renderNode` 커스텀 마크업                        |
+| 노드 접기/펼치기                     | ✅ `collapsed` 시드 + `.mc-org-toggle` + `expandOrgAll`           |
+| 세로/가로 배치                       | ✅ `organization.orientation` (vertical/horizontal)               |
+| 확대/축소·팬                         | ✅ `organization.panZoom` (휠 줌·드래그 팬·더블클릭 리셋)         |
+| 노드 Drag & Drop 이동(상위조직 변경) | ✅ `organization.editable` — 노드 드래그로 리페어런팅             |
+| 조직 생성/삭제                       | ✅ `addOrgNode`/`removeOrgNode`/`moveOrgNode` + `orgMove`         |
+| 조직 검색                            | ✅ `organization.searchable` — `.mc-org-search` + `searchOrg`     |
+| 노드 팝업메뉴                        | ✅ `organization.nodeMenu` — 노드 우클릭 메뉴(menuAction에 index) |
+| 미니맵                               | ✅ `organization.minimap` — `.mc-org-minimap` 인셋+뷰포트 팬      |
+| 테이블/세로형 노드                   | △ `renderNode`로 가능 — 내장 프리셋 없음                          |
+| 보조자(assistant) 노드               | ✅ `tree[].assistant` — 부모 트렁크 옆 카드(`.mc-org-assist`)     |
+| 왼쪽꺾은선 배치                      | ✅ `organization.layout:"elbow"` — DFS 행 나열 덴드로그램         |
+| 격자보기/자석 스냅                   | ❌ 자유배치 편집 전제 — 계획 없음                                 |
+| XML 저장/불러오기                    | △ 범용 `toXmlString`/`loadXml` (차트 옵션 단위)                   |
+| 이미지 저장                          | ✅ 범용 SVG/PNG보내기                                             |
+| 파일 비교·DB 동기화                  | ❌ 애플리케이션 책임 — 차트 라이브러리 범위 밖                    |
 
 ## 이벤트 대응표 (IBChart → moda-chart)
 

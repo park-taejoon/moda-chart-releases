@@ -30,49 +30,66 @@
 
 ## 파일 배치 규칙
 
-| 위치                                       | 내용                                                   |
-| ------------------------------------------ | ------------------------------------------------------ |
-| `packages/core/src/types.ts`               | 타입 barrel — `types/` 재export                        |
-| `packages/core/src/types/`                 | input(옵션)/views(스냅샷)/events/api                   |
-| `packages/core/src/scales.ts`              | 도메인/눈금/스케일 수학                                |
-| `packages/core/src/geometry.ts`            | line/area/arc path 빌더                                |
-| `packages/core/src/hierarchy.ts`           | 계층 정규화 + treemap/sunburst/chord                   |
-|                                            | 레이아웃                                               |
-| `packages/core/src/org-layout.ts`          | 조직도 레이아웃 — orientation/접기 지원                |
-| `packages/core/src/render/organization.ts` | 조직도 카드/링크 이미터 — 사진·renderNode·panZoom 변환 |
-| `packages/core/src/org-edit.ts` | 조직도 트리 불변 편집 — 스파인 클론 + 접힘 path 리매핑 (findTreeNode/updateChildren/remapOrgPaths) |
-| `packages/core/src/core.ts`                | `ChartCore` — 내장 빌더 주입 얇은 셸                   |
-| `packages/core/src/core-impl.ts`           | 공개 API 파사드 + 스냅샷 조립                          |
-| `packages/core/src/lite.ts`                | lite 경로 — 빌더 선택 번들(서브패스)                   |
-| `packages/core/src/view.ts`                | 뷰 계층 — 스켈레톤/renderInto/morph                    |
-| `packages/core/src/view-bindings.ts`       | 인터랙션 배선 — 이벤트→코어 액션                       |
-| `packages/core/src/view-download.ts`       | SVG/PNG 보내기                                         |
-| `packages/core/src/mount.ts`               | mountChart + 보내기 헬퍼                               |
-| `packages/core/src/snapshot/`              | 스냅샷 부속 뷰 빌더 — 축/라벨/마크/                    |
-|                                            | 오버레이/범례/툴팁/선택 순수 함수                      |
-| `packages/core/src/build/`                 | 스냅샷 지오메트리 — 타입별 순수 빌더 +                 |     |     | `registry.ts` 체인 (`buildGeometry`) |
-| `packages/core/src/controllers/`           | 상태 슬라이스 — data/viewport/                         |
-|                                            | interaction/drawing/map-state/sync                     |
-| `packages/core/src/features/`              | 피처 계약 — `CoreHost`/`ChartFeature`                  |
-|                                            | (`options.features`/`chart.use()`)                     |
-| `packages/core/src/hit-test.ts`            | px 좌표 → 포인트 해석 (HitContext 주입)                |
-| `packages/core/src/renderer.ts`            | `ChartRenderer` 계약 — 스냅샷→화면 경계                |
-| `packages/core/src/render/`                | 지오메트리 이미터 — kind별 순수 함수 +                 |
-|                                            | `registry.ts` 체인 (`emitGeometry`)                    |
-| `packages/core/src/svg-impl.ts`            | SVG 합성 — 축/그리드/오버레이 +                        |
-|                                            | 이미터 체인 주입본 (`svgInnerImpl`)                    |
-| `packages/core/src/svg.ts`                 | 풀 진입 — 내장 이미터 주입 `svgInner`                  |
-|                                            | (기본 `svgRenderer`는 mount.ts 소유)                   |
-| `packages/core/src/canvas.ts`              | Canvas2D 렌더러 — `createCanvasRenderer`               |
-|                                            | (`canvas.mc-canvas` + `updateChartChrome` 공유)        |
-| `packages/core/src/canvas/`                | 캔버스 드로우 — theme(토큰 해석)/                      |
-|                                            | context(색·패턴·이미지 캐시)/geometries(지오메트리)/   |
-|                                            | draw(축·그리드·오버레이 합성)                          |
-| `packages/core/src/conformance.ts`         | 공용 계약 스펙 엔트리 —                                |
-|                                            | `runChartConformance` 조합기                           |
-| `packages/core/src/conformance/`           | 스펙 본문 — context(마운트/픽스처) +                   |
-|                                            | basic/ibchart/ag/gap describe 그룹                     |
-| `packages/*/src`                           | 어댑터 — 바인딩만, 로직 없음                           |
-| `apps/dev-*`                               | 데모 — 기능 체크리스트 + 실제 옵션 사용                |
-| `e2e/`                                     | Playwright — helpers.ts의 apps 루프                    |
-| `docs/guide/`                              | 기능·플랫폼 가이드                                     |
+| 위치                                       | 내용                                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `packages/core/src/types.ts`               | 타입 barrel — `types/` 재export                                                                    |
+| `packages/core/src/types/`                 | input(옵션)/input-domain(도메인 옵션)/geometry(지오메트리 뷰)/views(스냅샷 크롬)/events/api        |
+| `packages/core/src/scales.ts`              | 도메인/눈금/스케일 수학                                                                            |
+| `packages/core/src/geometry.ts`            | line/area/arc path 빌더                                                                            |
+| `packages/core/src/hierarchy.ts`           | 계층 정규화 + treemap/sunburst/chord                                                               |
+|                                            | 레이아웃                                                                                           |
+| `packages/core/src/org-layout.ts`          | 조직도 레이아웃 — orientation/접기 지원                                                            |
+| `packages/core/src/render/organization.ts` | 조직도 카드/링크 이미터 — 사진·renderNode·panZoom 변환                                             |
+| `packages/core/src/org-edit.ts`            | 조직도 트리 불변 편집 — 스파인 클론 + 접힘 path 리매핑 (findTreeNode/updateChildren/remapOrgPaths) |
+| `packages/core/src/core.ts`                | `ChartCore` — 내장 빌더 주입 얇은 셸                                                               |
+| `packages/core/src/core-impl.ts`           | 공개 API 파사드 + 스냅샷 조립                                                                      |
+| `packages/core/src/lite.ts`                | lite 경로 — 빌더 선택 번들(서브패스)                                                               |
+| `packages/core/src/view.ts`                | 뷰 계층 — 스켈레톤/renderInto/morph                                                                |
+| `packages/core/src/domain.ts`              | 도메인 순수 계산 — 정규화/히스토그램/                                                              |
+|                                            | 카테고리/라벨/LTTB·그리드 다운샘플링                                                               |
+| `packages/core/src/locale.ts`              | 내장 문구 로케일 — StrKey + ko/en                                                                  |
+| `packages/core/src/maps/`                  | 내장 지형 데이터 — `maps/world` 서브패스                                                           |
+| `packages/core/src/view-bindings.ts`       | 인터랙션 배선 — 포인터 상태 머신 + 서브 바인더 오케스트레이션                                      |
+| `packages/core/src/nav-bindings.ts`        | 네비게이터/스크롤바 드래그 바인딩                                                                  |
+| `packages/core/src/toolbar-bindings.ts`    | 툴바/범례/메뉴 위임 클릭 + 전체화면                                                                |
+| `packages/core/src/org-bindings.ts`        | 조직도 검색 입력 + 미니맵 바인딩                                                                   |
+| `packages/core/src/keyboard-bindings.ts`   | 키보드 포인트 내비 + 포커스 좌표 해석                                                              |
+| `packages/core/src/frame-channels.ts`      | 프레임 병합 — 채널별 leading+trailing rAF 큐                                                       |
+| `packages/core/src/view-download.ts`       | SVG/PNG 보내기                                                                                     |
+| `packages/core/src/mount.ts`               | mountChart + 보내기 헬퍼                                                                           |
+| `packages/core/src/snapshot/`              | 스냅샷 부속 뷰 빌더 — 축/라벨/마크/                                                                |
+|                                            | 오버레이/범례/툴팁/선택 순수 함수                                                                  |
+| `packages/core/src/build/`                 | 스냅샷 지오메트리 — 타입별 순수 빌더 +                                                             |     |     | `registry.ts` 체인 (`buildGeometry`) |
+| `packages/core/src/controllers/`           | 상태 슬라이스 — data/viewport/                                                                     |
+|                                            | interaction/drawing/map-state/sync/organization                                                    |
+| `packages/core/src/features/`              | 피처 계약 — `CoreHost`/`ChartFeature`                                                              |
+|                                            | (`options.features`/`chart.use()`)                                                                 |
+| `packages/core/src/hit-test.ts`            | px 좌표 → 포인트 해석 디스패처 (HitContext 주입)                                                   |
+| `packages/core/src/hit-*.ts`               | 타입 패밀리별 hitTest 리졸버 — hit-radial/hit-flow/hit-misc/hit-cartesian                          |
+| `packages/core/src/renderer.ts`            | `ChartRenderer` 계약 — 스냅샷→화면 경계                                                            |
+| `packages/core/src/render/`                | 지오메트리 이미터 — kind별 순수 함수 +                                                             |
+|                                            | `registry.ts` 체인 (`emitGeometry`)                                                                |
+| `packages/core/src/svg-impl.ts`            | SVG 합성 — 축/그리드/오버레이 +                                                                    |
+|                                            | 이미터 체인 주입본 (`svgInnerImpl`)                                                                |
+| `packages/core/src/svg.ts`                 | 풀 진입 — 내장 이미터 주입 `svgInner`                                                              |
+|                                            | (기본 `svgRenderer`는 mount.ts 소유)                                                               |
+| `packages/core/src/canvas.ts`              | Canvas2D 렌더러 — `createCanvasRenderer`                                                           |
+|                                            | (`canvas.mc-canvas` + `updateChartChrome` 공유)                                                    |
+| `packages/core/src/canvas/`                | 캔버스 드로우 — theme(토큰 해석)/                                                                  |
+|                                            | context(색·패턴·이미지 캐시)/draw(축·그리드·                                                       |
+|                                            | 오버레이 합성)                                                                                     |
+| `packages/core/src/canvas/geometries/`     | 캔버스 지오메트리 — 패밀리별 드로우 +                                                              |
+|                                            | `../geometries.ts` 디스패처 (render/ 대칭)                                                         |
+| `packages/core/src/webgl.ts`               | WebGL 렌더러 — `createWebglRenderer`.                                                              |
+|                                            | GL 캔버스(지오메트리) + 2D 오버레이                                                                |
+|                                            | (`canvas.mc-canvas-2d`, 크롬/미지원 패밀리)                                                        |
+| `packages/core/src/webgl/`                 | GL 드로우 — context(셰이더/버퍼)·draw                                                              |
+|                                            | (스냅샷→프리미티브)·path(SVG path 평탄화)                                                          |
+| `packages/core/src/conformance.ts`         | 공용 계약 스펙 엔트리 —                                                                            |
+|                                            | `runChartConformance` 조합기                                                                       |
+| `packages/core/src/conformance/`           | 스펙 본문 — context(마운트/픽스처) +                                                               |
+|                                            | basic/ibchart/ag/gap describe 그룹                                                                 |
+| `packages/*/src`                           | 어댑터 — 바인딩만, 로직 없음                                                                       |
+| `apps/dev-*`                               | 데모 — 기능 체크리스트 + 실제 옵션 사용                                                            |
+| `e2e/`                                     | Playwright — helpers.ts의 apps 루프                                                                |
+| `docs/guide/`                              | 기능·플랫폼 가이드                                                                                 |

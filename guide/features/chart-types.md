@@ -15,6 +15,8 @@ new ChartCore({
 
 - `series[].values` — `categories`와 인덱스로 정렬되는 값 배열
 - `series[].points` — `{ x, y, z?, color?, name?, url?, urlTarget? }`
+  객체 또는 `[x, y]` 튜플(Highcharts `data` 배열과 같은 축약 —
+  혼용 가능, 코어가 객체로 정규화한다)
   명시 좌표 (scatter/시계열). `color`는 포인트 고정색, `name`은
   라벨 대체 이름, `url`은 클릭 네비게이션 링크 (아래 포인트 링크)
 - `series[].ranges` — `[low, high][]` 구간 데이터
@@ -118,7 +120,9 @@ new ChartCore({
 - `map`은 `series[].mapData`(지역 코드→값)를 지형 폴리곤에
   채우는 choropleth다. 지형은 `map: { topology }`에 TopoJSON 또는
   GeoJSON을 넘긴다 — 내장 세계 지도는 `WORLD_TOPOLOGY`를 임포트한다
-  (Natural Earth 110m, ~108KB). `code`는 피처의 id/iso 코드/name과
+  (Natural Earth 110m, ~108KB; `@moda-chart/core` 또는 데이터만
+  필요하면 `@moda-chart/core/maps/world` 서브패스로 가져온다).
+  `code`는 피처의 id/iso 코드/name과
   대소문자 무관하게 조인되고, 조인되지 않은 지역은 `.mc-map-no-data`로
   렌더된다. 축/줌/브러시/네비게이터 없이 지역 hover·선택을 지원하고
   플롯 우하단에 `.mc-map-scale` 값 범례(그라데이션 바)를 그린다.
@@ -542,6 +546,30 @@ mountSparkline(el, { values: [3, 7, 5, 9], type: "area" });
 `{ name, value }[]`를 돌려준다 (IBChart `parseText` 해당). 유니코드
 문자/숫자 연속을 단어로 보고 길이 1·불용어는 제외, 빈도 내림차순.
 wordcloud의 categories/values 입력으로 바로 쓸 수 있다.
+
+## 대용량 다운샘플링 (decimation)
+
+`decimation: true | { threshold, types, method }` — 시리즈 포인트가
+`threshold`(기본 2000)를 넘으면 그리는 지오메트리만 축소한다.
+`.mc-point` DOM과 path 꼭짓점 수가 threshold까지 줄어 수만 포인트
+데이터의 렌더 비용을 크게 낮춘다.
+
+- 기본 대상은 `line`/`step`/`spline`/`area` 경로 패밀리.
+  `types`에 `scatter`/`bubble`을 넣으면 샘플링을 확장할 수 있다.
+- `method`로 알고리즘을 고른다 — 기본 `"lttb"`
+  (Largest-Triangle-Three-Buckets)는 입력 순서를 잇는 경로 형상을
+  보존해 선 계열에 맞고, `"grid"`는 x·y 그리드 셀당 균등 쿼터를
+  남겨 순서가 없는 scatter/bubble의 밀도 분포를 보존한다.
+- 줄어든 포인트는 원본 `index`를 유지하므로 히트/툴팁/라벨이 원본
+  데이터 인덱스로 보고된다. 축 도메인·히트 테스트는 원본 데이터를
+  계속 쓴다 — decimation은 "그리기"에만 적용된다. dataLabels도
+  decimated 포인트 위에만 그려져 라벨 오버드로우가 없다.
+- `range-area`는 상한·하한이 인덱스로 짝지어야 해 적용되지 않는다.
+- 시각적 손실이 있을 수 있어 옵트인이다(기본 비활성).
+  데모의 "대용량 decimation" 차트가 5,000포인트→200점 예시다.
+- `devWarnings`(기본 활성)가 켜져 있으면 decimation 없이 2,000포인트를
+  넘는 line/step/spline/area/scatter/bubble 시리즈를 한 번만 경고한다.
+  실제로 축소되는 시리즈(types 적용 + threshold 초과)는 경고하지 않는다.
 
 ## DOM 계약
 
