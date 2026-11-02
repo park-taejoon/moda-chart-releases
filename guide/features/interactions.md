@@ -75,8 +75,9 @@ DOM 계약을 지키면 그대로 동작한다:
   (`.mc-tooltip`의 innerHTML로 삽입). 반환값은 escape되지 않으므로
   신뢰된 마크업만 반환할 것 (AG Charts tooltip.renderer 해당)
 - `pin: true` — 클릭으로 툴팁을 고정한다 (`.mc-tooltip.mc-pinned`).
-  같은 포인트 재클릭·빈 영역 클릭·Esc로 해제하며, 고정된 툴팁은
-  포인터가 벗어나도 닫히지 않는다. API: `chart.unpinTooltip()`.
+  같은 포인트 재클릭·빈 영역 클릭·Esc·툴팁 우측 `×` 버튼으로 해제하며,
+  고정된 툴팁은 포인터가 벗어나도 닫히지 않는다.
+  API: `chart.unpinTooltip()`.
 
 ## 포인트 hover · 클릭
 
@@ -214,17 +215,32 @@ zoom: {
 - `.mc-nav-bg`/`.mc-nav-track` 클릭 — 창 중심을 그 위치로 점프
 - `.mc-nav-track` — 보이는 시리즈의 전체 범위 미니 라인(줌 무관)
 
+창과 양쪽 핸들은 `role="slider"`의 포커스 가능한 슬라이더다 —
+Tab으로 도달해 ←/→로 이동·리사이즈하고 Home/End로 양끝에 놓는다
+(한 스텝은 전체 도메인의 1/40, PageUp/PageDown은 1/10 큰 스텝,
+`navKey(part, key)` 경로).
+`aria-valuetext`가 창 양끝의 도메인 라벨("1월–3월")을 읽어주므로
+스크린리더는 % 대신 실제 범위를 전달받는다.
+캔버스/WebGL 렌더러처럼 스트립이 픽셀로 그려지는 경우에는 같은
+위치에 투명 DOM 슬라이더(`.mc-nav-key`)를 얹어 동일한 키보드
+계약을 제공한다.
+
 코어 API로는 `navDragStart(px, edge)`/`navDragTo(px)`/`navDragEnd()`/
-`navJump(px)`가 있고, `bindChart`가 포인터 이벤트를 이들로 연결한다.
+`navJump(px)`/`navKey(part, key)`가 있고, `bindChart`가 포인터·키
+이벤트를 이들로 연결한다.
 
 ## 컨텍스트 메뉴
 
 `contextMenu: true | { items }` — 플롯 우클릭(contextmenu)으로
-`.mc-menu`를 연다 (AG Charts contextMenu 해당). 내장 항목은
+`.mc-menu`를 연다 (AG Charts contextMenu 해당). 키보드는
+Shift+F10/ContextMenu 키로 포커스 지점에 열고, 터치는 500ms
+롱프레스가 contextmenu 미지원 환경의 폴백으로 연다 — 열린 메뉴는
+↑↓/Home/End로 항목을 순회한다. 내장 항목은
 `reset-zoom`(줌 리셋)·`export-svg`·`export-png`·`export-csv`이고,
 `items: [{ id?, label }]`로 커스텀 항목을 뒤에 붙인다. 커스텀 항목
 클릭은 `menuAction` `{ id }` 이벤트로 전달되고 메뉴는 닫힌다.
-메뉴 바깥 클릭이나 Esc로도 닫힌다. 코어 API: `chart.openMenu(px, py)` /
+메뉴 바깥 클릭·Esc·Tab으로도 닫히고, 포커스는 차트 루트로 환원된다.
+코어 API: `chart.openMenu(px, py)` /
 `closeMenu()` / `activateMenuItem(id)`.
 
 ## 차트 동기화 (sync)
@@ -239,7 +255,8 @@ zoom: {
 `scrollbar: true | { height }` — 네비게이터(미니 차트) 없이 얇은
 줌 스트립만 그린다 (`.mc-scrollbar`, AG Charts scrollbar 해당).
 `.mc-sb-window` 드래그로 창 이동, `.mc-sb-handle-l`/`-r`로
-리사이즈 — 네비게이터와 같은 `navDragStart/To/End` 경로를 공유한다.
+리사이즈 — 네비게이터와 같은 `navDragStart/To/End` 경로와
+키보드 슬라이더(`navKey`)를 공유한다.
 `navigator`가 켜져 있으면 네비게이터가 우선하고 스크롤바는 생략된다.
 
 ## 주석 그리기 도구 (drawing)
@@ -271,9 +288,19 @@ chart.addDrawing({ tool: "channel", x1: 0, y1: 5, x2: 4, y2: 30, width: 20 });
 ## 터치 핀치 줌
 
 두 손가락 포인터가 오버레이 위에 동시에 닿으면 핀치 모드가 된다 —
-간격 변화율로 중점 앵커 줌(`.mc-overlay`에 `touch-action: none`).
-axes가 `y`/`xy`면 값 축도 함께 줌된다. 진행 중 드래그/그리기는
-취소된다.
+간격 변화율로 중점 앵커 줌. axes가 `y`/`xy`면 값 축도 함께 줌된다.
+진행 중 드래그/그리기는 취소된다.
+
+`touch-action`은 차트의 제스처 능력에 따라 동적으로 정해진다 —
+핀치줌/브러시/panZoom/드로잉 등 제스처를 소비하는 차트만 `none`으로
+제스처를 독점하고, 제스처가 없는 차트(파이·정적 차트 등)는
+`pan-y pinch-zoom`으로 세로 페이지 스크롤과 페이지 줌을 통과시켜
+차트가 모바일 스크롤 사각지대가 되지 않는다. `.mc-overlay`와
+`.mc-viewport`에 같은 값이 적용되며 옵션이 런타임에 바뀌면
+재평가된다. iOS Safari는 `touch-action`을 핀치에 적용하지 않으므로
+줌 가능 차트에서는 비표준 `gesturestart`/`gesturechange`를
+`preventDefault`해 차트 줌과 페이지 줌이 겹치지 않게 한다
+(비Safari는 이 이벤트를 발사하지 않아 no-op).
 
 ## 외부 데이터 로딩 (search)
 
@@ -281,7 +308,9 @@ IBChart `search` 네임스페이스 해당 — `search: { url, request?, transfo
 옵션 또는 `chart.search.load(args)`로 외부 JSON을 가져와 `setData`에
 주입한다. 로딩 중 `loading` 오버레이가 켜지고, 성공 시 `searchEnd`,
 실패 시 `searchError` 이벤트가 발행된다. `fetcher`를 주입하면
-fetch 대신 커스텀 로더를 쓸 수 있다.
+fetch 대신 커스텀 로더를 쓸 수 있다. 실패 메시지는 빈 차트에서
+`.mc-empty.mc-error`로 표시되고, `search` 옵션이 있으면 `.mc-retry`
+재시도 버튼이 함께 뜬다.
 
 ```ts
 const chart = new ChartCore({
@@ -361,7 +390,11 @@ gauge는 값 아크만 히트 대상이며 범례가 없다. 세 타입 모두
 | Esc         | 포커스/선택/호버 해제              |
 
 포커스된 요소는 `.mc-focused` 클래스 + `.mc-a11y`(aria-live)에
-설명이 들어간다.
+설명이 들어간다. 포인트 선택(`allowPointSelect`)·빈 상태·로딩
+실패도 같은 리전으로 읽힌다. 네비게이터/스크롤바의 창·핸들은
+별도의 `role="slider"` 슬라이더로 Tab으로 도달한다 (네비게이터
+섹션 참조). `prefers-reduced-motion`이면 CSS뿐 아니라 JS
+morph/rAF 전환도 꺼진다(`snap.animate=false`).
 
 ## 이벤트
 

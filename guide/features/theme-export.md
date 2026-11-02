@@ -42,3 +42,5 @@ chart.toCSV(); // "category,시리즈명…" 헤더 + 행 CSV
 - 파일명 — `exporting: { filename: "sales" }`로 기본명을 바꾼다
   (기본 `"chart"` → `chart.svg`/`chart.png`/`chart.csv`)
 - 발행 이벤트: `export: { format }`
+- 개별 버튼 숨김은 `disabled: ["export"]`, `.mc-toolbar` 전체 숨김은
+  `toolbar: false` (미니/스파크라인류의 크롬 없는 차트에 유용)

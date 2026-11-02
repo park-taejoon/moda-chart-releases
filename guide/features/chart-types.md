@@ -237,6 +237,8 @@ new ChartCore({
   `.mc-org-minimap` 인셋을 띄운다 — 전체 트리의 축소 사본
   (`.mc-org-mm-node`)과 현재 뷰포트 사각형(`.mc-org-mm-view`)을 그리고,
   클릭/드래그하면 해당 지점이 플롯 중앙에 오도록 팬한다.
+  인셋은 키보드 포커스도 가능하고, 화살표 키는 뷰포트를 스텝
+  이동한다(`orgMinimapNudge` — 클램프 경계에서 멈춘다).
   `organization.panZoom`과 함께 켜면 휠 줌도 뷰포트 사각형에 반영된다.
   SVG/캔버스 렌더러 모두 같은 HTML 인셋을 공유한다.
   팬/줌이 적용된 상태에서는 뷰포트 밖 노드·링크가 자동으로 컬링된다 —
@@ -319,6 +321,9 @@ chart.addSeries({ name: "이익", values: [3, 6, 2] });
 chart.removeSeries("이익"); // 시리즈 id 기준
 chart.addPoint("매출", 33); // 끝에 추가
 chart.addPoint("매출", 33, { shift: true }); // 앞을 밀어내 창 유지
+// shift + 명시 categories — 라벨도 같이 밀린다. 꼬리 라벨은
+// category로 넘기거나, 생략 시 마지막 라벨의 숫자가 증분된다 ("4월"→"5월")
+chart.addPoint("매출", 33, { shift: true, category: "5월" });
 chart.removePoint("매출", 0); // 인덱스 기준
 ```
 

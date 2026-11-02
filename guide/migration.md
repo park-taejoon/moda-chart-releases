@@ -39,7 +39,7 @@
 | radar / radar-area              | `type: "radar"` / `"radar-area"` (values 기반, 카테고리=스포크)                                                                          | `.mc-radar` + `.mc-radar-grid`                                                 |
 | range bar / range area          | `type: "range-bar"` / `"range-area"` + `series[].ranges`                                                                                 | `[low,high]` 구간 데이터                                                       |
 | candlestick / OHLC              | `type: "candlestick"` + `series[].ohlc`                                                                                                  | `[open,high,low,close]`                                                        |
-| navigator / dataZoom 미니맵     | `navigator: true \| { height }`                                                                                                          | `.mc-navigator` 창 드래그가 줌 제어                                            |
+| navigator / dataZoom 미니맵     | `navigator: true \| { height }`                                                                                                          | `.mc-navigator` 창 드래그·키보드 슬라이더(`navKey`)가 줌 제어                   |
 | errorBar / 오차 막대            | `type: "errorbar"` + `series[].ranges`(위스커)·`values`(중심 마커), 또는 `series[].errors` 오버레이                                      | `.mc-eb`/`.mc-eb-mean` (타입) · `.mc-error` (오버레이)                         |
 | trendLine / 추세선              | `series[].trend: { type: "linear" \| "movingAverage" }`                                                                                  | `.mc-trendline` 점선                                                           |
 | setCategories / 데이터 패치     | `chart.setCategories` / `updateSeries` / `updatePoint`                                                                                   | `pointUpdate` 이벤트                                                           |
@@ -122,5 +122,6 @@
 | dev 경고 (옵션 오입력) | `devWarnings` 옵션 (기본 true) | 알 수 없는 type·형태 오류를 console.warn으로 알림 — 커스텀 타입 경로는 자동 면제 |
 | WebGL 렌더러 | `renderer: createWebglRenderer()` | GL 지오메트리 + 2D 오버레이 하이브리드 — GL 부재 시 Canvas2D 폴백 |
 | dev 경고 (대용량 미축소) | `devWarnings` 옵션 | decimation 없이 2,000포인트 초과 시리즈를 1회 경고 |
+| 툴바 숨김 | `toolbar: false` | `.mc-toolbar` 전체 제거 — 크롬 없는 미니 차트용 |
 
 <!-- 새 기능 행을 여기에 추가 -->

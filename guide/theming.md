@@ -135,6 +135,12 @@
 `theme: "dark"` 옵션 또는 `chart.setTheme("dark")`로 전환한다.
 커스텀 테마는 같은 선택자 구조로 변수를 덮어쓰면 된다.
 
+OS `prefers-color-scheme` 미디어쿼리로 변수를 전환하는 테마도
+지원한다 — SVG는 CSS라 자동으로 갱신되고, Canvas/WebGL은
+`matchMedia("(prefers-color-scheme: dark)")` change 리스너로 OS
+전환 즉시 테마를 다시 굽는다 (리스너는 unmount 시 해제된다 —
+attach 단위라 StrictMode 재마운트·라우트 이동에서 누적되지 않는다).
+
 ## 객체 테마
 
 CSS 파일 없이 `theme` 옵션 하나로 브랜드 테마를 전달할 수 있다
