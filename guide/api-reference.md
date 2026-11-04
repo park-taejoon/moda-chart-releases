@@ -80,22 +80,22 @@ SVG export(toMarkup)는 미지원 — 내보내기는 코어 `toSVGString` 경�
 
 ## 데이터 — `ChartDataApi`
 
-| 메서드                                  | 설명                                              |
-| --------------------------------------- | ------------------------------------------------- |
-| `setData(series, categories?)`          | 시리즈/카테고리 교체                              |
-| `addSeries(input)` / `removeSeries(id)` | 시리즈 추가/제거                                  |
+| 메서드                                          | 설명                                                                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `setData(series, categories?)`                  | 시리즈/카테고리 교체                                                                                                                 |
+| `addSeries(input)` / `removeSeries(id)`         | 시리즈 추가/제거                                                                                                                     |
 | `addPoint(seriesId, point, {shift, category}?)` | 실시간 포인트 추가 — `{x,y}` 또는 `[x,y]` 튜플. `shift` + 명시 카테고리면 라벨도 함께 밀고 꼬리에 `category` 부착(생략 시 숫자 증분) |
-| `removePoint(seriesId, index)`          | 포인트 제거                                       |
-| `updateSeries(id, patch)`               | 시리즈 속성 부분 갱신 — 없으면 false              |
-| `updatePoint(seriesId, index, value)`   | 포인트 값 갱신 — `pointUpdate` 발행, 없으면 false |
-| `setCategories(cats)`                   | 카테고리 배열 교체                                |
-| `updateDelta(patch)`                    | 옵션/데이터 부분 병합 — `undefined` 값은 키 해제  |
-| `loadXml(xml)`                          | IBChart XML 데이터 로드                           |
-| `getEtcData(seriesId, index?)`          | `etcData` 부가 데이터 조회                        |
-| `getSeries()`                           | 시리즈 요약 — id 기반 API의 해석된 id 조회        |
-| `getCategories()`                       | 현재 카테고리 배열                                |
-| `batch(fn)`                             | 여러 변경을 묶어 무효화 1회로                     |
-| `redraw()`                              | 강제 재렌더                                       |
+| `removePoint(seriesId, index)`                  | 포인트 제거                                                                                                                          |
+| `updateSeries(id, patch)`                       | 시리즈 속성 부분 갱신 — 없으면 false                                                                                                 |
+| `updatePoint(seriesId, index, value)`           | 포인트 값 갱신 — `pointUpdate` 발행, 없으면 false                                                                                    |
+| `setCategories(cats)`                           | 카테고리 배열 교체                                                                                                                   |
+| `updateDelta(patch)`                            | 옵션/데이터 부분 병합 — `undefined` 값은 키 해제                                                                                     |
+| `loadXml(xml)`                                  | IBChart XML 데이터 로드                                                                                                              |
+| `getEtcData(seriesId, index?)`                  | `etcData` 부가 데이터 조회                                                                                                           |
+| `getSeries()`                                   | 시리즈 요약 — id 기반 API의 해석된 id 조회                                                                                           |
+| `getCategories()`                               | 현재 카테고리 배열                                                                                                                   |
+| `batch(fn)`                                     | 여러 변경을 묶어 무효화 1회로                                                                                                        |
+| `redraw()`                                      | 강제 재렌더                                                                                                                          |
 
 ## 상태 — `ChartStateApi`
 
@@ -147,16 +147,16 @@ SVG export(toMarkup)는 미지원 — 내보내기는 코어 `toSVGString` 경�
 
 ## 줌·팬 — `ChartZoomApi`
 
-| 메서드                                     | 설명                                |
-| ------------------------------------------ | ----------------------------------- |
-| `zoomAt(px, factor, py?)`                  | 앵커 줌 — factor>1 확대             |
-| `panByPx(dx, dy?)`                         | px만큼 팬                           |
-| `setZoomWindow(w)` / `resetZoom()`         | 줌 창 설정/리셋                     |
-| `startDrag` / `dragTo` / `endDrag`         | 드래그 수명주기 (shift로 모드 반전) |
-| `setSelection(range)` / `clearSelection()` | 선택 범위                           |
-| `navDragStart/To/End` · `navJump(px)`      | 네비게이터 조작                     |
+| 메서드                                     | 설명                                 |
+| ------------------------------------------ | ------------------------------------ |
+| `zoomAt(px, factor, py?)`                  | 앵커 줌 — factor>1 확대              |
+| `panByPx(dx, dy?)`                         | px만큼 팬                            |
+| `setZoomWindow(w)` / `resetZoom()`         | 줌 창 설정/리셋                      |
+| `startDrag` / `dragTo` / `endDrag`         | 드래그 수명주기 (shift로 모드 반전)  |
+| `setSelection(range)` / `clearSelection()` | 선택 범위                            |
+| `navDragStart/To/End` · `navJump(px)`      | 네비게이터 조작                      |
 | `navKey(part, key)`                        | 키보드 네비게이터 — 창/핸들 슬라이더 |
-| `applyZoomPreset(i)`                       | `zoom.presets` 버튼 적용            |
+| `applyZoomPreset(i)`                       | `zoom.presets` 버튼 적용             |
 
 ## 드릴다운 — `ChartDrilldownApi`
 
@@ -185,7 +185,7 @@ SVG export(toMarkup)는 미지원 — 내보내기는 코어 `toSVGString` 경�
 | `moveOrgNode(i, newParent)`                             | 리페어런팅 — `orgMove`. 사이클/동일 부모는 no-op |
 | `beginOrgDragAt` / `updateOrgDrag` / `endOrgDrag`       | `editable` DnD 리페어런팅                        |
 | `searchOrg(q)` / `searchOrgNext()` / `clearOrgSearch()` | 검색 — `orgSearch`                               |
-| `orgMinimapPan(mx, my)`                                 | 미니맵 좌표로 팬 (뷰 중앙으로)                  |
+| `orgMinimapPan(mx, my)`                                 | 미니맵 좌표로 팬 (뷰 중앙으로)                   |
 | `orgMinimapNudge(dx, dy)`                               | 미니맵 viewBox 단위 누진 팬 (키보드 이동)        |
 
 ## 외부 데이터 — `ChartSearchApi`
